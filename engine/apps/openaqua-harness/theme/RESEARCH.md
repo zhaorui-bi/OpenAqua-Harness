@@ -35,28 +35,30 @@ This is a pattern observation, not proof that every researcher prefers blue or s
 
 | Role | Light | Dark | Use |
 | --- | --- | --- | --- |
-| Canvas | `#F6F8FA` | `#0B1420` | Long-session reading surface |
-| Raised surface | `#FFFFFF` | `#152233` | Cards, menus and composer |
-| Primary text | `#14243A` | `#E9F0F7` | Prose and UI labels |
-| Muted text | `#52657A` | `#A5B3C2` | Secondary information |
-| Accessible blue | `#075FB5` | `#66B8F2` | Links, focus and selection |
-| Action blue | `#0A58A8` | `#1765B5` | Filled primary controls |
-| Logo cyan | `#0098D4` | `#4CC6E8` | Decorative highlights and datum lines |
-| Deep navy | `#081E31` | `#071B2C` | Sidebar and brand support |
+| Canvas | `#F3FBFA` | `#0D2632` | Long-session reading surface |
+| Raised surface | `#FFFFFF` | `#143A49` | Cards, menus and composer |
+| Primary text | `#17384A` | `#EAF8F5` | Prose and UI labels |
+| Muted text | `#496B78` | `#B0CFCB` | Secondary information |
+| Canonical blue | `#2777B8` | `#71BDF0` | Links, focus and selection |
+| Action blue | `#246EA8` | `#2A76AA` | Filled primary controls |
+| Logo aqua | `#43BCC4` | `#5FD3D1` | Decorative highlights and datum lines |
+| Logo teal | `#239F83` | `#58C9A9` | Brand gradients, nodes and selected rails |
+| Sidebar | `#E7F7F3` | `#0E3542` | Bright navigation and brand support |
 
-The canonical logo retains its original teal-to-blue droplet and green/blue framework nodes. Saturated brand colors are reserved for the mark and small highlights; accessible, darker derivatives carry interactive semantics. Amber remains available only for warnings, while red and green remain semantic error/success colors.
+The canonical logo retains its original teal-to-blue droplet and green/blue framework nodes. The revised palette deliberately lifts the light sidebar from near-black to pale mint and shifts dark mode from black navy to illuminated deep aqua. Saturated brand colors remain concentrated in the mark, primary controls and small highlights. Amber remains available only for warnings, while red and green retain semantic error/success roles.
 
 The main tested text pairs meet WCAG 2.2 AA:
 
-- light primary text / canvas: `14.69:1`;
-- light muted text / canvas: `5.63:1`;
-- light faint text / canvas: `4.63:1`;
-- light link / canvas: `5.95:1`;
-- white / light action button: `7.06:1`;
-- dark primary text / canvas: `16.10:1`;
-- dark faint text / canvas: `5.72:1`;
-- dark link / canvas: `8.55:1`;
-- white / dark action button: `5.89:1`.
+- light primary text / canvas: `11.75:1`;
+- light muted text / canvas: `5.47:1`;
+- light faint text / canvas: `4.55:1`;
+- light link / canvas: `4.53:1`;
+- white / light action button: `5.43:1`;
+- light sidebar text / sidebar: `10.79:1`;
+- dark primary text / canvas: `14.36:1`;
+- dark faint text / canvas: `6.83:1`;
+- dark link / canvas: `7.64:1`;
+- white / dark action button: `4.92:1`.
 
 Color must never be the only carrier of status. Icons, text labels or shape changes remain required.
 

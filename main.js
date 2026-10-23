@@ -481,7 +481,7 @@ function createMainWindow() {
     minWidth: 800,
     minHeight: 600,
     show: false,
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0b1420' : '#f6f8fa',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0d2632' : '#f3fbfa',
     title: PRODUCT,
     webPreferences: {
       contextIsolation: true,
@@ -540,15 +540,17 @@ function showLoading(message) {
   <title>${PRODUCT}</title>
   <style>
     :root {
-      --paper: #f6f8fa;
+      --paper: #f3fbfa;
       --raised: #ffffff;
-      --ink: #14243a;
-      --muted: #52657a;
-      --blue: #075fb5;
-      --cyan: #0098d4;
-      --line: rgba(7, 95, 181, .2);
-      --grid: rgba(0, 112, 190, .028);
-      --wash: rgba(0, 151, 212, .1);
+      --ink: #17384a;
+      --muted: #496b78;
+      --blue: #2777b8;
+      --cyan: #43bcc4;
+      --teal: #239f83;
+      --line: rgba(39, 119, 184, .22);
+      --grid: rgba(35, 159, 131, .045);
+      --wash: rgba(67, 188, 196, .16);
+      --teal-wash: rgba(35, 159, 131, .12);
       color-scheme: light dark;
     }
     * { box-sizing: border-box; }
@@ -559,10 +561,11 @@ function showLoading(message) {
       overflow: hidden;
       background-color: var(--paper);
       background-image:
-        radial-gradient(circle at 50% 38%, var(--wash), transparent 26rem),
+        radial-gradient(circle at 50% 32%, var(--wash), transparent 26rem),
+        radial-gradient(circle at 14% 86%, var(--teal-wash), transparent 21rem),
         linear-gradient(var(--grid) 1px, transparent 1px),
         linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-      background-size: auto, 32px 32px, 32px 32px;
+      background-size: auto, auto, 32px 32px, 32px 32px;
       color: var(--ink);
       font-family: system-ui, -apple-system, "Noto Sans SC", "PingFang SC", sans-serif;
     }
@@ -596,7 +599,12 @@ function showLoading(message) {
     .card {
       width: min(680px, calc(100vw - 80px));
       padding: 42px;
+      border: 1px solid color-mix(in srgb, var(--blue) 18%, transparent);
+      border-radius: 28px;
+      background: color-mix(in srgb, var(--raised) 78%, transparent);
+      box-shadow: 0 28px 80px -52px color-mix(in srgb, var(--blue) 46%, transparent), inset 0 1px rgba(255, 255, 255, .55);
       text-align: center;
+      backdrop-filter: blur(18px) saturate(1.08);
       animation: reveal .5s cubic-bezier(.16, 1, .3, 1) both;
     }
     .eyebrow {
@@ -610,7 +618,7 @@ function showLoading(message) {
       width: 78px;
       height: 78px;
       margin: 0 auto 25px;
-      filter: drop-shadow(0 14px 22px color-mix(in srgb, var(--blue) 24%, transparent));
+      filter: drop-shadow(0 14px 22px color-mix(in srgb, var(--teal) 28%, transparent));
     }
     .mark img {
       display: block;
@@ -646,7 +654,7 @@ function showLoading(message) {
       width: 4px;
       height: 4px;
       border-radius: 50%;
-      background: var(--cyan);
+      background: var(--teal);
     }
     .detail {
       color: var(--muted);
@@ -668,8 +676,8 @@ function showLoading(message) {
       background: var(--blue);
       animation: breathe 1.5s ease-in-out infinite;
     }
-    .pulse i:nth-child(2) { animation-delay: .18s; }
-    .pulse i:nth-child(3) { animation-delay: .36s; }
+    .pulse i:nth-child(2) { background: var(--teal); animation-delay: .18s; }
+    .pulse i:nth-child(3) { background: var(--cyan); animation-delay: .36s; }
     @keyframes reveal {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
@@ -680,15 +688,17 @@ function showLoading(message) {
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --paper: #0b1420;
-        --raised: #152233;
-        --ink: #e9f0f7;
-        --muted: #a5b3c2;
-        --blue: #66b8f2;
-        --cyan: #4cc6e8;
-        --line: rgba(102, 184, 242, .25);
-        --grid: rgba(96, 180, 231, .027);
-        --wash: rgba(0, 139, 219, .12);
+        --paper: #0d2632;
+        --raised: #143a49;
+        --ink: #eaf8f5;
+        --muted: #b0cfcb;
+        --blue: #71bdf0;
+        --cyan: #5fd3d1;
+        --teal: #58c9a9;
+        --line: rgba(113, 189, 240, .3);
+        --grid: rgba(95, 211, 209, .045);
+        --wash: rgba(74, 190, 202, .18);
+        --teal-wash: rgba(88, 201, 169, .14);
       }
     }
     @media (prefers-reduced-motion: reduce) {

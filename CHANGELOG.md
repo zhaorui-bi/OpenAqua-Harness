@@ -38,6 +38,13 @@ versioning.
 - A documented validation baseline at OpenAqua commit `0e39908` and Hugging Face
   dataset revision `cc2d3c620e8ada7c62fa922cf3a827d8b42889e3`.
 
+### Changed
+
+- Brightened the desktop and Web visual system with a logo-aligned mint, aqua,
+  and blue palette; first launch now defaults to the light theme while retaining
+  explicit user preferences, and all application icon formats use a luminous
+  aqua-white tile.
+
 ### Security
 
 - Atomic private configuration writes and strict malformed-config handling.

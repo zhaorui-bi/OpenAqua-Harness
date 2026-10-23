@@ -1,6 +1,6 @@
 /*
  * OpenAqua research visual system
- * Porcelain neutrals × deep navy × accessible teal/blue from the OpenAqua droplet mark.
+ * Luminous aqua porcelain × mint/blue accents from the OpenAqua droplet mark.
  *
  * Typography is deliberately split by task: sans-serif for every frequent
  * reading/action surface; serif is reserved for the brand and large hero copy.
@@ -15,109 +15,145 @@
   --sans: var(--font-ui);
   --font-sans: var(--font-ui);
 
-  --tb-paper: #f6f8fa;
+  --tb-paper: #f3fbfa;
   --tb-paper-raised: #ffffff;
-  --tb-paper-soft: #edf2f6;
-  --tb-paper-deep: #e2e9ef;
-  --tb-ink: #14243a;
-  --tb-ink-strong: #08182b;
-  --tb-ink-muted: #52657a;
-  --tb-ink-faint: #607288;
-  --tb-blue: #075fb5;
-  --tb-blue-hover: #064b91;
-  --tb-action: #0a58a8;
-  --tb-action-hover: #064b91;
-  --tb-cyan: #0098d4;
-  --tb-cyan-bright: #63caf7;
-  --tb-cobalt: #558bf4;
-  --tb-blue-deep: #063f7e;
-  --tb-success: #237059;
-  --tb-warning: #8a6118;
+  --tb-paper-soft: #e7f6f3;
+  --tb-paper-deep: #d7ece9;
+  --tb-ink: #17384a;
+  --tb-ink-strong: #0c2939;
+  --tb-ink-muted: #496b78;
+  --tb-ink-faint: #5a7782;
+  --tb-blue: #2777b8;
+  --tb-blue-hover: #1e6198;
+  --tb-action: #246ea8;
+  --tb-action-hover: #1b5a8d;
+  --tb-cyan: #43bcc4;
+  --tb-cyan-bright: #79d9d4;
+  --tb-teal: #239f83;
+  --tb-teal-bright: #69cfb6;
+  --tb-cobalt: #438bd0;
+  --tb-blue-deep: #1d5a8a;
+  --tb-success: #247b61;
+  --tb-warning: #89611a;
   --tb-danger: #b43b49;
   --tb-done: #655aa4;
-  --tb-line: rgba(28, 54, 78, 0.14);
-  --tb-line-strong: rgba(7, 95, 181, 0.28);
-  --tb-grid: rgba(0, 112, 190, 0.027);
-  --tb-blue-wash: rgba(0, 151, 212, 0.09);
-  --tb-surface-glass: rgba(255, 255, 255, 0.91);
-  --tb-sidebar: #081e31;
-  --tb-sidebar-deep: #051725;
-  --tb-sidebar-text: #f3f8fc;
-  --tb-sidebar-muted: rgba(220, 233, 244, 0.76);
-  --tb-sidebar-faint: rgba(196, 216, 232, 0.54);
-  --tb-sidebar-line: rgba(103, 178, 220, 0.18);
-  --tb-sidebar-hover: rgba(105, 184, 230, 0.08);
-  --tb-sidebar-selected: rgba(54, 139, 198, 0.2);
-  --tb-shadow-color: rgba(18, 40, 62, 0.16);
+  --tb-line: rgba(32, 93, 108, 0.14);
+  --tb-line-strong: rgba(39, 119, 184, 0.3);
+  --tb-grid: rgba(35, 159, 131, 0.045);
+  --tb-blue-wash: rgba(67, 188, 196, 0.15);
+  --tb-teal-wash: rgba(35, 159, 131, 0.12);
+  --tb-surface-glass: rgba(255, 255, 255, 0.93);
+  --tb-sidebar: #e7f7f3;
+  --tb-sidebar-deep: #d7efea;
+  --tb-sidebar-text: #173b4a;
+  --tb-sidebar-strong: #0b2d3d;
+  --tb-sidebar-muted: rgba(36, 79, 91, 0.76);
+  --tb-sidebar-faint: rgba(48, 91, 101, 0.58);
+  --tb-sidebar-line: rgba(35, 159, 131, 0.2);
+  --tb-sidebar-hover: rgba(35, 159, 131, 0.09);
+  --tb-sidebar-selected: rgba(39, 119, 184, 0.14);
+  --tb-sidebar-selected-text: #0c3345;
+  --tb-sidebar-button-from: #2777b8;
+  --tb-sidebar-button-to: #1d806d;
+  --tb-sidebar-button-text: #ffffff;
+  --tb-sidebar-key-bg: rgba(255, 255, 255, 0.56);
+  --tb-sidebar-key-line: rgba(44, 128, 139, 0.2);
+  --tb-shadow-color: rgba(34, 82, 95, 0.16);
 }
 
 html[data-color-scheme="dark"] {
-  --tb-paper: #0b1420;
-  --tb-paper-raised: #152233;
-  --tb-paper-soft: #101c29;
-  --tb-paper-deep: #07101a;
-  --tb-ink: #e9f0f7;
-  --tb-ink-strong: #f8fbff;
-  --tb-ink-muted: #a5b3c2;
-  --tb-ink-faint: #7f91a5;
-  --tb-blue: #66b8f2;
-  --tb-blue-hover: #83cbf7;
-  --tb-action: #1765b5;
-  --tb-action-hover: #2174c7;
-  --tb-cyan: #4cc6e8;
-  --tb-cyan-bright: #6adcf6;
-  --tb-cobalt: #6f8ff8;
-  --tb-blue-deep: #114d8b;
-  --tb-success: #66b48d;
-  --tb-warning: #e1b85b;
-  --tb-danger: #ef7b86;
-  --tb-done: #b5a0e0;
-  --tb-line: rgba(159, 187, 213, 0.15);
-  --tb-line-strong: rgba(102, 184, 242, 0.33);
-  --tb-grid: rgba(96, 180, 231, 0.027);
-  --tb-blue-wash: rgba(0, 139, 219, 0.11);
-  --tb-surface-glass: rgba(21, 34, 51, 0.92);
-  --tb-sidebar: #071b2c;
-  --tb-sidebar-deep: #04131f;
-  --tb-sidebar-line: rgba(96, 181, 226, 0.19);
-  --tb-sidebar-hover: rgba(108, 193, 235, 0.075);
-  --tb-sidebar-selected: rgba(57, 145, 204, 0.19);
-  --tb-shadow-color: rgba(0, 0, 0, 0.48);
+  --tb-paper: #0d2632;
+  --tb-paper-raised: #143a49;
+  --tb-paper-soft: #10313f;
+  --tb-paper-deep: #071f2a;
+  --tb-ink: #eaf8f5;
+  --tb-ink-strong: #fafffe;
+  --tb-ink-muted: #b0cfcb;
+  --tb-ink-faint: #8eb2b2;
+  --tb-blue: #71bdf0;
+  --tb-blue-hover: #94d4f5;
+  --tb-action: #2a76aa;
+  --tb-action-hover: #236794;
+  --tb-cyan: #5fd3d1;
+  --tb-cyan-bright: #8ee8df;
+  --tb-teal: #58c9a9;
+  --tb-teal-bright: #83e0c5;
+  --tb-cobalt: #7badf2;
+  --tb-blue-deep: #205b82;
+  --tb-success: #6dcca5;
+  --tb-warning: #e4be67;
+  --tb-danger: #ef828d;
+  --tb-done: #b9a7e4;
+  --tb-line: rgba(171, 218, 214, 0.17);
+  --tb-line-strong: rgba(113, 189, 240, 0.36);
+  --tb-grid: rgba(95, 211, 209, 0.045);
+  --tb-blue-wash: rgba(74, 190, 202, 0.16);
+  --tb-teal-wash: rgba(88, 201, 169, 0.13);
+  --tb-surface-glass: rgba(20, 58, 73, 0.93);
+  --tb-sidebar: #0e3542;
+  --tb-sidebar-deep: #092b36;
+  --tb-sidebar-text: #f0fbf9;
+  --tb-sidebar-strong: #ffffff;
+  --tb-sidebar-muted: rgba(220, 244, 240, 0.81);
+  --tb-sidebar-faint: rgba(188, 224, 221, 0.61);
+  --tb-sidebar-line: rgba(111, 211, 204, 0.22);
+  --tb-sidebar-hover: rgba(111, 211, 204, 0.12);
+  --tb-sidebar-selected: rgba(113, 189, 240, 0.22);
+  --tb-sidebar-selected-text: #ffffff;
+  --tb-sidebar-button-from: #2a76aa;
+  --tb-sidebar-button-to: #1d806d;
+  --tb-sidebar-button-text: #ffffff;
+  --tb-sidebar-key-bg: rgba(220, 244, 240, 0.08);
+  --tb-sidebar-key-line: rgba(164, 226, 219, 0.22);
+  --tb-shadow-color: rgba(0, 16, 24, 0.42);
 }
 
 @media (prefers-color-scheme: dark) {
   html[data-color-scheme="system"] {
-    --tb-paper: #0b1420;
-    --tb-paper-raised: #152233;
-    --tb-paper-soft: #101c29;
-    --tb-paper-deep: #07101a;
-    --tb-ink: #e9f0f7;
-    --tb-ink-strong: #f8fbff;
-    --tb-ink-muted: #a5b3c2;
-    --tb-ink-faint: #7f91a5;
-    --tb-blue: #66b8f2;
-    --tb-blue-hover: #83cbf7;
-    --tb-action: #1765b5;
-    --tb-action-hover: #2174c7;
-    --tb-cyan: #4cc6e8;
-    --tb-cyan-bright: #6adcf6;
-    --tb-cobalt: #6f8ff8;
-    --tb-blue-deep: #114d8b;
-    --tb-success: #66b48d;
-    --tb-warning: #e1b85b;
-    --tb-danger: #ef7b86;
-    --tb-done: #b5a0e0;
-    --tb-line: rgba(159, 187, 213, 0.15);
-    --tb-line-strong: rgba(102, 184, 242, 0.33);
-    --tb-grid: rgba(96, 180, 231, 0.027);
-    --tb-blue-wash: rgba(0, 139, 219, 0.11);
-    --tb-surface-glass: rgba(21, 34, 51, 0.92);
-    --tb-sidebar: #071b2c;
-    --tb-sidebar-deep: #04131f;
-    --tb-sidebar-line: rgba(96, 181, 226, 0.19);
-    --tb-sidebar-hover: rgba(108, 193, 235, 0.075);
-    --tb-sidebar-selected: rgba(57, 145, 204, 0.19);
-    --tb-shadow-color: rgba(0, 0, 0, 0.48);
+    --tb-paper: #0d2632;
+    --tb-paper-raised: #143a49;
+    --tb-paper-soft: #10313f;
+    --tb-paper-deep: #071f2a;
+    --tb-ink: #eaf8f5;
+    --tb-ink-strong: #fafffe;
+    --tb-ink-muted: #b0cfcb;
+    --tb-ink-faint: #8eb2b2;
+    --tb-blue: #71bdf0;
+    --tb-blue-hover: #94d4f5;
+    --tb-action: #2a76aa;
+    --tb-action-hover: #236794;
+    --tb-cyan: #5fd3d1;
+    --tb-cyan-bright: #8ee8df;
+    --tb-teal: #58c9a9;
+    --tb-teal-bright: #83e0c5;
+    --tb-cobalt: #7badf2;
+    --tb-blue-deep: #205b82;
+    --tb-success: #6dcca5;
+    --tb-warning: #e4be67;
+    --tb-danger: #ef828d;
+    --tb-done: #b9a7e4;
+    --tb-line: rgba(171, 218, 214, 0.17);
+    --tb-line-strong: rgba(113, 189, 240, 0.36);
+    --tb-grid: rgba(95, 211, 209, 0.045);
+    --tb-blue-wash: rgba(74, 190, 202, 0.16);
+    --tb-teal-wash: rgba(88, 201, 169, 0.13);
+    --tb-surface-glass: rgba(20, 58, 73, 0.93);
+    --tb-sidebar: #0e3542;
+    --tb-sidebar-deep: #092b36;
+    --tb-sidebar-text: #f0fbf9;
+    --tb-sidebar-strong: #ffffff;
+    --tb-sidebar-muted: rgba(220, 244, 240, 0.81);
+    --tb-sidebar-faint: rgba(188, 224, 221, 0.61);
+    --tb-sidebar-line: rgba(111, 211, 204, 0.22);
+    --tb-sidebar-hover: rgba(111, 211, 204, 0.12);
+    --tb-sidebar-selected: rgba(113, 189, 240, 0.22);
+    --tb-sidebar-selected-text: #ffffff;
+    --tb-sidebar-button-from: #2a76aa;
+    --tb-sidebar-button-to: #1d806d;
+    --tb-sidebar-button-text: #ffffff;
+    --tb-sidebar-key-bg: rgba(220, 244, 240, 0.08);
+    --tb-sidebar-key-line: rgba(164, 226, 219, 0.22);
+    --tb-shadow-color: rgba(0, 16, 24, 0.42);
   }
 }
 
@@ -244,16 +280,16 @@ body,
   background-color: var(--color-bg);
   background-image:
     radial-gradient(circle at 88% 8%, var(--tb-blue-wash), transparent 31rem),
-    radial-gradient(circle at 8% 94%, color-mix(in srgb, var(--tb-cyan) 5%, transparent), transparent 27rem),
+    radial-gradient(circle at 8% 94%, var(--tb-teal-wash), transparent 27rem),
     linear-gradient(var(--tb-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--tb-grid) 1px, transparent 1px);
   background-size: auto, auto, 32px 32px, 32px 32px;
 }
 
-/* Sidebar: deep navy anchors the cyan/cobalt mark without tinting the reading canvas. */
+/* Sidebar: a luminous mint/blue rail that keeps the canonical mark visually central. */
 .app .side {
   --color-text: var(--tb-sidebar-text);
-  --color-text-strong: #ffffff;
+  --color-text-strong: var(--tb-sidebar-strong);
   --color-text-muted: var(--tb-sidebar-muted);
   --color-text-faint: var(--tb-sidebar-faint);
   --color-text-quaternary: color-mix(in srgb, var(--tb-sidebar-faint) 68%, transparent);
@@ -272,13 +308,14 @@ body,
   color: var(--tb-sidebar-text);
   background-color: var(--tb-sidebar);
   background-image:
-    radial-gradient(circle at 5% 0%, rgba(0, 193, 234, 0.14), transparent 17rem),
-    radial-gradient(circle at 100% 38%, rgba(0, 72, 242, 0.08), transparent 23rem);
+    radial-gradient(circle at 5% 0%, color-mix(in srgb, var(--tb-teal) 24%, transparent), transparent 17rem),
+    radial-gradient(circle at 100% 38%, color-mix(in srgb, var(--tb-blue) 16%, transparent), transparent 23rem),
+    linear-gradient(155deg, color-mix(in srgb, white 12%, transparent), transparent 48%);
 }
 
 .app .side .col {
   border-right-color: var(--tb-sidebar-line);
-  box-shadow: 12px 0 38px -34px rgba(0, 0, 0, 0.88);
+  box-shadow: 12px 0 38px -34px var(--tb-shadow-color);
 }
 
 .side .ch {
@@ -294,13 +331,13 @@ body,
 .side .ch-logo,
 .wordmark image,
 .gload-logo image {
-  filter: drop-shadow(0 4px 11px rgba(0, 104, 211, 0.22));
+  filter: drop-shadow(0 4px 11px color-mix(in srgb, var(--tb-blue) 24%, transparent));
 }
 
 .side .ch-logo {
   width: 34px;
   height: 30px;
-  filter: saturate(1.04) drop-shadow(0 4px 11px rgba(0, 138, 226, 0.34));
+  filter: saturate(1.08) drop-shadow(0 4px 11px color-mix(in srgb, var(--tb-teal) 34%, transparent));
 }
 
 .side .ch-name {
@@ -320,16 +357,16 @@ body,
 .side .btn-new-chat {
   min-height: 40px;
   padding: 9px 12px;
-  border: 1px solid rgba(102, 189, 231, 0.3);
+  border: 1px solid color-mix(in srgb, white 34%, transparent);
   border-radius: 11px;
-  background: linear-gradient(115deg, rgba(71, 166, 220, 0.15), rgba(45, 105, 180, 0.055));
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.055), 0 10px 22px -18px rgba(0, 0, 0, 0.72);
-  color: #f4f9fa;
+  background: linear-gradient(115deg, var(--tb-sidebar-button-from), var(--tb-sidebar-button-to));
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.22), 0 10px 22px -16px color-mix(in srgb, var(--tb-blue) 42%, transparent);
+  color: var(--tb-sidebar-button-text);
 }
 
 .side .btn-new-chat:hover {
-  border-color: rgba(94, 196, 236, 0.56);
-  background: linear-gradient(115deg, rgba(62, 171, 224, 0.22), rgba(52, 112, 191, 0.08));
+  border-color: color-mix(in srgb, white 56%, transparent);
+  background: linear-gradient(115deg, color-mix(in srgb, var(--tb-sidebar-button-from) 88%, white), color-mix(in srgb, var(--tb-sidebar-button-to) 88%, white));
 }
 
 .side .search {
@@ -342,7 +379,7 @@ body,
 .side .side-section-label,
 .side .pinned-label {
   padding-top: 10px;
-  color: color-mix(in srgb, var(--tb-sidebar-muted) 84%, var(--tb-blue));
+  color: color-mix(in srgb, var(--tb-sidebar-muted) 72%, var(--tb-teal));
   font-family: var(--font-ui);
   font-size: 11px;
   font-weight: 650;
@@ -360,26 +397,26 @@ body,
 .side .sessions .se:hover,
 .side .ws-dir:hover,
 .side .done-gh:hover {
-  border-color: rgba(170, 205, 216, 0.08);
+  border-color: color-mix(in srgb, var(--tb-teal) 18%, transparent);
   transform: translateX(1px);
 }
 
 .side .sessions .se.on,
 .side .ws-dir.on {
-  border-color: rgba(87, 176, 222, 0.24);
-  background: linear-gradient(100deg, rgba(49, 143, 202, 0.23), rgba(56, 104, 186, 0.075));
-  box-shadow: inset 3px 0 #55bce4, inset 0 1px rgba(255, 255, 255, 0.04);
+  border-color: color-mix(in srgb, var(--tb-blue) 30%, transparent);
+  background: linear-gradient(100deg, color-mix(in srgb, var(--tb-blue) 16%, var(--tb-sidebar)), color-mix(in srgb, var(--tb-teal) 14%, var(--tb-sidebar)));
+  box-shadow: inset 3px 0 var(--tb-teal), inset 0 1px rgba(255, 255, 255, 0.15);
 }
 
 .side .sessions .se.on .t,
 .side .ws-dir.on .ws-dir-name {
-  color: #ffffff;
-  font-weight: 550;
+  color: var(--tb-sidebar-selected-text);
+  font-weight: 600;
 }
 
 .side .ui-kbd__key {
-  border-color: rgba(164, 201, 213, 0.2);
-  background: rgba(222, 239, 243, 0.05);
+  border-color: var(--tb-sidebar-key-line);
+  background: var(--tb-sidebar-key-bg);
   color: var(--tb-sidebar-muted);
 }
 
@@ -388,13 +425,13 @@ body,
   min-height: 48px;
   padding: 8px 12px;
   border-top-color: var(--tb-sidebar-line);
-  background: color-mix(in srgb, var(--tb-sidebar-deep) 89%, transparent);
+  background: color-mix(in srgb, var(--tb-sidebar-deep) 86%, transparent);
   backdrop-filter: blur(14px);
 }
 
 .side .user-menu-avatar {
-  border: 1px solid rgba(157, 198, 211, 0.22);
-  background: rgba(222, 239, 243, 0.07);
+  border: 1px solid var(--tb-sidebar-key-line);
+  background: var(--tb-sidebar-key-bg);
 }
 
 /* Header: a restrained blue datum line; session names stay fast to scan. */
@@ -415,7 +452,7 @@ body,
   left: 18px;
   height: 1px;
   pointer-events: none;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tb-blue) 48%, transparent) 43%, color-mix(in srgb, var(--tb-cyan) 58%, transparent) 57%, transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tb-blue) 52%, transparent) 43%, color-mix(in srgb, var(--tb-teal) 62%, transparent) 57%, transparent);
   opacity: 0.44;
 }
 
@@ -440,7 +477,7 @@ body,
   padding: 11px 15px;
   border: 1px solid color-mix(in srgb, var(--tb-blue) 19%, var(--tb-line));
   border-radius: 16px 16px 5px 16px;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--tb-blue) 8%, var(--tb-paper-raised)), color-mix(in srgb, var(--tb-cyan) 4%, var(--tb-paper-raised)));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tb-blue) 8%, var(--tb-paper-raised)), color-mix(in srgb, var(--tb-teal) 7%, var(--tb-paper-raised)));
   box-shadow: 0 9px 24px -20px var(--tb-shadow-color), inset 0 1px color-mix(in srgb, white 30%, transparent);
 }
 
@@ -545,7 +582,7 @@ body,
   left: 42px;
   height: 1px;
   pointer-events: none;
-  background: linear-gradient(90deg, transparent, var(--tb-blue), var(--tb-cyan), transparent);
+  background: linear-gradient(90deg, transparent, var(--tb-blue), var(--tb-teal), transparent);
   opacity: 0.42;
 }
 
@@ -566,7 +603,7 @@ body,
 
 .chat-dock .ui-button--inverted {
   border: 1px solid color-mix(in srgb, var(--tb-blue) 25%, transparent);
-  background: linear-gradient(145deg, var(--tb-action), color-mix(in srgb, var(--tb-action) 84%, var(--tb-cyan)));
+  background: linear-gradient(145deg, var(--tb-action), color-mix(in srgb, var(--tb-action) 82%, var(--tb-teal)));
   color: #ffffff;
   box-shadow: 0 7px 18px -10px color-mix(in srgb, var(--tb-action) 72%, transparent);
 }
@@ -578,13 +615,13 @@ body,
 /* Buttons, cards, menus and dialogs use one academic-blue interaction grammar. */
 .ui-button.ui-button--primary {
   border-color: var(--tb-action);
-  background: linear-gradient(135deg, var(--tb-action), color-mix(in srgb, var(--tb-action) 84%, var(--tb-cyan)));
+  background: linear-gradient(135deg, var(--tb-action), color-mix(in srgb, var(--tb-action) 82%, var(--tb-teal)));
   box-shadow: 0 10px 24px -16px var(--tb-action), inset 0 1px rgba(255, 255, 255, 0.17);
 }
 
 .ui-button.ui-button--primary:not(:disabled):hover {
   border-color: var(--tb-action-hover);
-  background: linear-gradient(135deg, var(--tb-action-hover), color-mix(in srgb, var(--tb-action) 78%, var(--tb-cyan)));
+  background: linear-gradient(135deg, var(--tb-action-hover), color-mix(in srgb, var(--tb-action) 76%, var(--tb-teal)));
   box-shadow: 0 13px 28px -17px var(--tb-action);
 }
 
@@ -689,9 +726,10 @@ body,
   background-color: var(--color-bg);
   background-image:
     radial-gradient(circle at 50% 42%, var(--tb-blue-wash), transparent 23rem),
+    radial-gradient(circle at 18% 84%, var(--tb-teal-wash), transparent 19rem),
     linear-gradient(var(--tb-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--tb-grid) 1px, transparent 1px);
-  background-size: auto, 32px 32px, 32px 32px;
+  background-size: auto, auto, 32px 32px, 32px 32px;
 }
 
 .gload-box .gload-logo {
@@ -712,9 +750,10 @@ body .wizard {
   background-color: var(--color-bg);
   background-image:
     radial-gradient(circle at 50% 22%, var(--tb-blue-wash), transparent 29rem),
+    radial-gradient(circle at 10% 88%, var(--tb-teal-wash), transparent 24rem),
     linear-gradient(var(--tb-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--tb-grid) 1px, transparent 1px);
-  background-size: auto, 32px 32px, 32px 32px;
+  background-size: auto, auto, 32px 32px, 32px 32px;
 }
 
 body .wizard::before {
@@ -801,7 +840,7 @@ body .wizard::before {
 
 .wizard .opt-card.selected {
   border-color: var(--tb-blue);
-  background: linear-gradient(145deg, color-mix(in srgb, var(--tb-blue) 10%, var(--color-surface-raised)), color-mix(in srgb, var(--tb-cyan) 5%, var(--color-surface-raised)));
+  background: linear-gradient(145deg, color-mix(in srgb, var(--tb-blue) 10%, var(--color-surface-raised)), color-mix(in srgb, var(--tb-teal) 8%, var(--color-surface-raised)));
   box-shadow: 0 12px 30px -24px var(--tb-blue), inset 3px 0 var(--tb-blue);
 }
 
@@ -825,22 +864,22 @@ body .wizard::before {
 
 .wizard .tp-light,
 .wizard .tp-half-light {
-  background: #f6f8fa;
+  background: #f3fbfa;
 }
 
 .wizard .tp-dark,
 .wizard .tp-half-dark {
-  background: #0b1420;
+  background: #0d2632;
 }
 
 .wizard .tp-light .tp-side,
 .wizard .tp-half-light .tp-side {
-  background: #081e31;
+  background: #e7f7f3;
 }
 
 .wizard .tp-dark .tp-side,
 .wizard .tp-half-dark .tp-side {
-  background: #071b2c;
+  background: #0e3542;
 }
 
 .wizard .wiz-primary {

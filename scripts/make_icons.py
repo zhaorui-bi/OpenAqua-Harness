@@ -1,8 +1,8 @@
 """Rebuild every OpenAqua Harness icon from the canonical brand logo.
 
-The teal-to-blue OpenAqua artwork in ``build/logo.png`` is preserved exactly. This
-script only removes its white canvas and places the resulting transparent mark
-on the dark-navy application tile; it never recolors the brand artwork.
+The teal-to-blue OpenAqua artwork in ``build/logo.png`` remains the source of
+truth. This script removes its white canvas and places the resulting transparent
+mark on a bright aqua-white application tile; it never recolors the artwork.
 
 Outputs:
   build/icon.png        1024x1024 app icon
@@ -16,14 +16,18 @@ Run:  uv run --with pillow,numpy python3 scripts/make_icons.py && iconutil -c ic
 import os
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 SIZE = 1024
 RADIUS = 225
-LOGO_SCALE = 0.68  # symbol diameter as a fraction of the icon size
-PANEL_INNER = np.array([15.0, 51.0, 76.0])
-PANEL_OUTER = np.array([5.0, 20.0, 34.0])
-PANEL_BORDER = (79, 188, 230, 132)
+LOGO_SCALE = 0.72  # symbol diameter as a fraction of the icon size
+PANEL_TOP = np.array([250.0, 255.0, 254.0])
+PANEL_BOTTOM = np.array([225.0, 243.0, 250.0])
+PANEL_MINT = np.array([216.0, 248.0, 239.0])
+PANEL_BLUE = np.array([218.0, 237.0, 252.0])
+PANEL_BORDER = (58, 174, 184, 205)
+PANEL_HIGHLIGHT = (255, 255, 255, 210)
+MARK_SHADOW = (31, 107, 137)
 HERE = os.path.dirname(__file__)
 OUT = os.path.join(HERE, '..', 'build')
 LOGO = os.path.join(OUT, 'logo.png')
@@ -76,36 +80,70 @@ def resized_to_fit(img: Image.Image, target: int) -> Image.Image:
     ratio = min(target / img.width, target / img.height)
     width = max(1, round(img.width * ratio))
     height = max(1, round(img.height * ratio))
-    return img.resize((width, height), Image.LANCZOS)
+    resized = img.resize((width, height), Image.LANCZOS)
+    if ratio > 1.0:
+        radius = min(1.6, max(0.6, ratio * 0.28))
+        resized = resized.filter(ImageFilter.UnsharpMask(radius=radius, percent=125, threshold=2))
+    return resized
 
 
-def instrument_canvas(size: int) -> Image.Image:
-    """Create a softly illuminated, cool instrument-panel field."""
+def bright_canvas(size: int) -> Image.Image:
+    """Create a luminous aqua-white field derived from the canonical logo."""
     yy, xx = np.mgrid[0:size, 0:size]
-    distance = np.sqrt(
-        ((xx - size / 2) / (size * 0.72)) ** 2
-        + ((yy - size * 0.4) / (size * 0.72)) ** 2
-    )[..., None]
-    blend = np.clip(distance, 0.0, 1.0)
-    rgb = (PANEL_INNER * (1.0 - blend) + PANEL_OUTER * blend).astype(np.uint8)
+    nx = xx / max(1, size - 1)
+    ny = yy / max(1, size - 1)
+    base = PANEL_TOP * (1.0 - ny[..., None]) + PANEL_BOTTOM * ny[..., None]
+
+    mint = np.exp(-(((nx - 0.16) / 0.62) ** 2 + ((ny - 0.12) / 0.58) ** 2)) * 0.5
+    blue = np.exp(-(((nx - 0.88) / 0.58) ** 2 + ((ny - 0.86) / 0.62) ** 2)) * 0.46
+    rgb = base * (1.0 - mint[..., None]) + PANEL_MINT * mint[..., None]
+    rgb = rgb * (1.0 - blue[..., None]) + PANEL_BLUE * blue[..., None]
+
+    center = np.exp(-(((nx - 0.5) / 0.55) ** 2 + ((ny - 0.43) / 0.58) ** 2)) * 0.18
+    rgb = rgb * (1.0 - center[..., None]) + 255.0 * center[..., None]
     alpha = np.full((size, size, 1), 255, dtype=np.uint8)
-    return Image.fromarray(np.concatenate([rgb, alpha], axis=2), 'RGBA')
+    return Image.fromarray(
+        np.concatenate([np.clip(rgb, 0.0, 255.0).astype(np.uint8), alpha], axis=2),
+        'RGBA',
+    )
 
 
 def fit_on_canvas(logo: Image.Image, size: int, scale: float) -> Image.Image:
-    canvas = instrument_canvas(size)
+    canvas = bright_canvas(size)
     target = int(size * scale)
     logo = resized_to_fit(logo, target)
     x = (size - logo.width) // 2
     y = (size - logo.height) // 2
+
+    shadow_alpha = logo.getchannel('A').filter(
+        ImageFilter.GaussianBlur(radius=max(2, round(size * 0.014)))
+    )
+    shadow_alpha = shadow_alpha.point(lambda value: round(value * 0.24))
+    shadow = Image.new('RGBA', logo.size, (*MARK_SHADOW, 0))
+    shadow.putalpha(shadow_alpha)
+    canvas.alpha_composite(shadow, (x, y + round(size * 0.018)))
     canvas.alpha_composite(logo, (x, y))
+
     draw = ImageDraw.Draw(canvas)
     inset = max(2, round(size * 0.027))
+    radius = round(size * 0.195)
     draw.rounded_rectangle(
         [inset, inset, size - inset - 1, size - inset - 1],
-        radius=round(size * 0.195),
+        radius=radius,
         outline=PANEL_BORDER,
-        width=max(1, round(size / 512)),
+        width=max(2, round(size / 384)),
+    )
+    highlight_inset = inset + max(3, round(size * 0.006))
+    draw.rounded_rectangle(
+        [
+            highlight_inset,
+            highlight_inset,
+            size - highlight_inset - 1,
+            size - highlight_inset - 1,
+        ],
+        radius=max(1, radius - (highlight_inset - inset)),
+        outline=PANEL_HIGHLIGHT,
+        width=max(1, round(size / 768)),
     )
     return canvas
 
@@ -122,7 +160,7 @@ def main() -> None:
     )
     mark.save(os.path.join(OUT, 'logo-256.png'))
 
-    # Dark-navy app tile using the same, unmodified cyan-to-cobalt mark.
+    # Bright aqua-white app tile using the same, unmodified teal-to-blue mark.
     icon_rgba = fit_on_canvas(source.copy(), SIZE, LOGO_SCALE)
     final = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
     final.paste(icon_rgba, (0, 0), rounded_mask(SIZE, RADIUS))

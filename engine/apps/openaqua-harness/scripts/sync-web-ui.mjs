@@ -56,11 +56,11 @@ const TEXT_REPLACEMENTS = [
   ['Kimi Code', 'OpenAqua Harness'],
   [
     '<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />',
-    '<meta name="theme-color" content="#f6f8fa" media="(prefers-color-scheme: light)" />',
+    '<meta name="theme-color" content="#f3fbfa" media="(prefers-color-scheme: light)" />',
   ],
   [
     '<meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />',
-    '<meta name="theme-color" content="#0b1420" media="(prefers-color-scheme: dark)" />',
+    '<meta name="theme-color" content="#0d2632" media="(prefers-color-scheme: dark)" />',
   ],
   ['The AI coding workbench for professional developers', 'The AI research workbench for evidence-grounded water-treatment design'],
   ['为专业开发者打造的 AI 编程工作台', '面向循证水处理工艺设计的 AI 科研工作台'],
@@ -72,6 +72,16 @@ const TEXT_REPLACEMENTS = [
   [
     'light:"Moon bright",dark:"Moon dark",system:"System"',
     'light:"Light",dark:"Dark",system:"System"',
+  ],
+  // OpenAqua starts with its bright logo-aligned theme while preserving any
+  // explicit user choice already stored by the upstream Web application.
+  [
+    'function vZe(){const e=kM(Ese);return e&&Mse.includes(e)?e:"system"}',
+    'function vZe(){const e=kM(Ese);return e&&Mse.includes(e)?e:"light"}',
+  ],
+  [
+    'const Cw={light:"#ffffff",dark:"#121212"}',
+    'const Cw={light:"#f3fbfa",dark:"#0d2632"}',
   ],
   [
     'light:"月之亮面",dark:"月之暗面",system:"跟随系统"',
@@ -156,17 +166,17 @@ const TEXT_REPLACEMENTS = [
 // Model Providers settings page; the API-providers group right after it stays.
 
 const CSS_REPLACEMENTS = [
-  ['--logo: #1783ff', '--logo: #075FB5'],
-  ['--logo: #1a88ff', '--logo: #66B8F2'],
-  // Brand accent: accessible UI blues derived from the canonical logo spectrum.
-  ['--color-accent: #1783ff', '--color-accent: #075FB5'],
-  ['--color-accent: #1a88ff', '--color-accent: #66B8F2'],
-  ['--color-accent-hover: #258eff', '--color-accent-hover: #064B91'],
-  ['--color-accent-soft: rgba(26, 136, 255, .1)', '--color-accent-soft: rgba(7, 95, 181, .11)'],
-  ['--color-accent-soft: #e8f3ff', '--color-accent-soft: #E7F0F7'],
-  ['--color-accent-bd: rgba(26, 136, 255, .28)', '--color-accent-bd: rgba(7, 95, 181, .32)'],
-  ['--blue: #1a88ff', '--blue: #075FB5'],
-  ['--markdown-link-color: light-dark(#0f6ef2, #3393ff)', '--markdown-link-color: light-dark(#075FB5, #66B8F2)'],
+  ['--logo: #1783ff', '--logo: #2777B8'],
+  ['--logo: #1a88ff', '--logo: #71BDF0'],
+  // Brand accent: accessible mint/blue values derived from the canonical logo.
+  ['--color-accent: #1783ff', '--color-accent: #2777B8'],
+  ['--color-accent: #1a88ff', '--color-accent: #71BDF0'],
+  ['--color-accent-hover: #258eff', '--color-accent-hover: #1E6198'],
+  ['--color-accent-soft: rgba(26, 136, 255, .1)', '--color-accent-soft: rgba(39, 119, 184, .12)'],
+  ['--color-accent-soft: #e8f3ff', '--color-accent-soft: #E2F3F1'],
+  ['--color-accent-bd: rgba(26, 136, 255, .28)', '--color-accent-bd: rgba(39, 119, 184, .32)'],
+  ['--blue: #1a88ff', '--blue: #2777B8'],
+  ['--markdown-link-color: light-dark(#0f6ef2, #3393ff)', '--markdown-link-color: light-dark(#2777B8, #71BDF0)'],
 ];
 
 const FONT =
@@ -448,8 +458,30 @@ function assertBrandContract() {
   if (!indexHtml.includes('<title>OpenAqua Harness</title>')) {
     throw new Error('Branding contract failed: product title was not applied');
   }
+  for (const expectedThemeColor of ['#f3fbfa', '#0d2632']) {
+    if (!indexHtml.includes(`content="${expectedThemeColor}"`)) {
+      throw new Error(
+        `Branding contract failed: theme color ${expectedThemeColor} was not applied`,
+      );
+    }
+  }
   if (themedStylesheets < 1) {
     throw new Error('Branding contract failed: OpenAqua theme was not appended');
+  }
+  const stylesheets = readdirSync(path.join(DST, 'assets'))
+    .filter((entry) => entry.endsWith('.css'))
+    .map((entry) => readFileSync(path.join(DST, 'assets', entry), 'utf8'))
+    .join('\n');
+  for (const token of [
+    '--tb-paper: #f3fbfa',
+    '--tb-teal: #239f83',
+    '--tb-sidebar: #e7f7f3',
+    '--tb-paper: #0d2632',
+    '--tb-sidebar: #0e3542',
+  ]) {
+    if (!stylesheets.includes(token)) {
+      throw new Error(`Branding contract failed: bright palette token ${token} is missing`);
+    }
   }
   for (const [anchor, count] of svgReplacementCounts) {
     if (count !== 1) {
@@ -471,6 +503,14 @@ function assertBrandContract() {
     .join('\n');
   if (!javascript.includes(expectedVersion)) {
     throw new Error('Branding contract failed: About-page version was not synchronized');
+  }
+  if (
+    !javascript.includes(
+      'function vZe(){const e=kM(Ese);return e&&Mse.includes(e)?e:"light"}',
+    ) ||
+    !javascript.includes('const Cw={light:"#f3fbfa",dark:"#0d2632"}')
+  ) {
+    throw new Error('Branding contract failed: bright default color scheme was not applied');
   }
   const kimiProviderIconCount = javascript.split('<title>Kimi</title>').length - 1;
   if (kimiProviderIconCount !== 1 || javascript.includes('<title>OpenAqua</title>')) {

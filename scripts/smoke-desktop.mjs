@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import {
   accessSync,
   constants,
@@ -39,6 +40,7 @@ try {
     'harness/skills/openaqua-campaign/SKILL.md',
     'harness/backend/openaqua_cli.py',
     'web-ui/index.html',
+    'web-ui/favicon.ico',
     'licenses/OPENAQUA_HARNESS_LICENSE',
     'licenses/KIMI_CODE_LICENSE',
     'licenses/OPENAQUA_UPSTREAM_LICENSE',
@@ -51,6 +53,18 @@ try {
   }
   assertPackagedVersions(resources, productVersion);
   assertNoPythonCache(path.join(resources, 'harness/backend'));
+  assertSameFile(
+    path.join(root, 'build/icon.ico'),
+    path.join(resources, 'web-ui/favicon.ico'),
+    'packaged Web favicon',
+  );
+  if (process.platform === 'darwin') {
+    assertSameFile(
+      path.join(root, 'build/icon.icns'),
+      path.join(resources, 'icon.icns'),
+      'packaged macOS application icon',
+    );
+  }
 
   const args = [
     '--smoke-test',
@@ -159,6 +173,18 @@ function assertFile(filePath, label) {
   if (!existsSync(filePath) || !statSync(filePath).isFile()) {
     throw new Error(`${label} is missing: ${filePath}`);
   }
+}
+
+function assertSameFile(expectedPath, actualPath, label) {
+  assertFile(expectedPath, `${label} source`);
+  assertFile(actualPath, label);
+  if (sha256(expectedPath) !== sha256(actualPath)) {
+    throw new Error(`${label} differs from ${expectedPath}`);
+  }
+}
+
+function sha256(filePath) {
+  return createHash('sha256').update(readFileSync(filePath)).digest('hex');
 }
 
 function assertPackagedVersions(resourcesDirectoryPath, expectedVersion) {
