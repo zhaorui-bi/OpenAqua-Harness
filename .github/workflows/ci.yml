@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify source and builds (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [24.15.0, 26.x]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Use the pinned npm release
+        run: npm install --global npm@12.0.2
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install engine dependencies and build
+        run: npm run setup
+
+      - name: Lint, typecheck, and test
+        run: npm run check
+
+      - name: Test source-mode worker runtimes
+        run: |
+          ./node_modules/.bin/pnpm -C engine exec vitest run \
+            packages/kap-server/test/search/searchService.test.ts \
+            packages/kap-server/test/search/searchRoute.test.ts
+          ./node_modules/.bin/pnpm -C engine/packages/minidb exec vitest run test/worker-build.test.ts
+
+      - name: Smoke-test the built harness outside the source tree
+        shell: bash
+        run: |
+          stage="$RUNNER_TEMP/openaqua-harness-smoke"
+          mkdir -p "$stage/harness"
+          cp -R engine/apps/openaqua-harness/dist "$stage/harness/dist"
+          cp -R engine/apps/openaqua-harness/skills "$stage/harness/skills"
+          cp -R engine/apps/openaqua-harness/backend "$stage/harness/backend"
+          cp -R engine/apps/openaqua-harness/web-ui "$stage/harness/web-ui"
+          (
+            cd "$stage"
+            OPENAQUA_HOME="$stage/home" node "$stage/harness/dist/cli.mjs" --version > version.txt
+            OPENAQUA_HOME="$stage/home" node "$stage/harness/dist/cli.mjs" tools --json > tools.json
+          )
+          node - "$stage/version.txt" "$stage/tools.json" engine/apps/openaqua-harness/package.json <<'NODE'
+          const fs = require('node:fs');
+          const assert = require('node:assert/strict');
+          const version = fs.readFileSync(process.argv[2], 'utf8').trim();
+          const catalog = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
+          const expected = JSON.parse(fs.readFileSync(process.argv[4], 'utf8')).version;
+          assert.equal(version, expected);
+          assert.equal(catalog.tools.length, 16);
+          assert.equal(new Set(catalog.tools.map((tool) => tool.name)).size, 16);
+          const logTool = catalog.tools.find((tool) => tool.name === 'openaqua_job_log');
+          assert.ok(logTool.parameters.includes('cursor'));
+          assert.ok(logTool.parameters.includes('view'));
+          assert.ok(catalog.tools.some((tool) => tool.name === 'openaqua_job_list'));
+          assert.ok(catalog.tools.some((tool) => tool.name === 'openaqua_job_artifacts'));
+          assert.ok(catalog.tools.some((tool) => tool.name === 'openaqua_job_manifest'));
+          const cancelTool = catalog.tools.find((tool) => tool.name === 'openaqua_job_cancel');
+          assert.equal(cancelTool.annotations.destructiveHint, true);
+          NODE
+          test -f "$stage/harness/skills/openaqua/SKILL.md"
+          test -f "$stage/harness/skills/openaqua-campaign/SKILL.md"
+          test -f "$stage/harness/backend/openaqua_cli.py"
+          node engine/apps/openaqua-harness/scripts/smoke-mcp.mjs "$stage/harness/dist/mcp-server.mjs"
+          node engine/apps/openaqua-harness/scripts/smoke-web.mjs \
+            "$stage/harness/dist/cli.mjs" "$stage/harness/web-ui"
+
+      - name: Audit shipped runtime dependencies
+        run: |
+          npm audit --audit-level=low
+          npm run audit:runtime

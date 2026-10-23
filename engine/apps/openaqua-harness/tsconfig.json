@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src", "../../packages/agent-core-v2/src"],
+  "exclude": ["../../packages/agent-core-v2/src/human/test"]
+}

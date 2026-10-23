@@ -1,0 +1,25 @@
+.DS_Store
+Thumbs.db
+node_modules/
+dist/
+.env
+.env.*
+*.pem
+*.key
+
+# Local runtime data may contain API keys, credentials, sessions and logs.
+/.openaqua/
+/.kimi-code/
+/openaqua-data/
+/kimi-data/
+**/openaqua-jobs/
+/mcp.json
+/server.token
+
+# Local build, test, and scratch output.
+/.tmp/
+/.cache/
+coverage/
+*.log
+__pycache__/
+*.py[cod]

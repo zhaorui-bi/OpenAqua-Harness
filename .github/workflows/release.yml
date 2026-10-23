@@ -1,0 +1,267 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing v-prefixed tag to publish
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify release candidate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24.15.0
+          cache: npm
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+
+      - name: Use the pinned npm release
+        run: npm install --global npm@12.0.2
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run setup
+
+      - name: Verify tag and release gates
+        id: version
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          expected="v$(node -p "require('./package.json').version")"
+          test "$RELEASE_TAG" = "$expected"
+          test "$(git tag --points-at HEAD | grep -Fx "$RELEASE_TAG")" = "$RELEASE_TAG"
+          test "$(git cat-file -t "refs/tags/$RELEASE_TAG")" = 'tag'
+          npm run release:check
+          git diff --exit-code
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+
+  package:
+    name: Signed package (${{ matrix.id }})
+    needs: verify
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: mac-x64
+            os: macos-15-intel
+            target: --mac --x64
+          - id: mac-arm64
+            os: macos-15
+            target: --mac --arm64
+          - id: windows-x64
+            os: windows-2022
+            target: --win --x64
+          - id: linux-x64
+            os: ubuntu-24.04
+            target: --linux --x64
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.verify.outputs.tag }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24.15.0
+          cache: npm
+
+      - name: Use the pinned npm release
+        run: npm install --global npm@12.0.2
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run setup
+          npm run check:licenses
+
+      - name: Configure macOS signing and notarization
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          MACOS_CSC_LINK: ${{ secrets.MACOS_CSC_LINK }}
+          MACOS_CSC_KEY_PASSWORD: ${{ secrets.MACOS_CSC_KEY_PASSWORD }}
+          APPLE_API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+          APPLE_API_KEY_ID_VALUE: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER_VALUE: ${{ secrets.APPLE_API_ISSUER }}
+        run: |
+          test -n "$MACOS_CSC_LINK"
+          test -n "$MACOS_CSC_KEY_PASSWORD"
+          test -n "$APPLE_API_KEY_P8"
+          test -n "$APPLE_API_KEY_ID_VALUE"
+          test -n "$APPLE_API_ISSUER_VALUE"
+          key_path="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID_VALUE}.p8"
+          printf '%s' "$APPLE_API_KEY_P8" > "$key_path"
+          chmod 600 "$key_path"
+          {
+            echo "CSC_LINK=$MACOS_CSC_LINK"
+            echo "CSC_KEY_PASSWORD=$MACOS_CSC_KEY_PASSWORD"
+            echo "APPLE_API_KEY=$key_path"
+            echo "APPLE_API_KEY_ID=$APPLE_API_KEY_ID_VALUE"
+            echo "APPLE_API_ISSUER=$APPLE_API_ISSUER_VALUE"
+          } >> "$GITHUB_ENV"
+
+      - name: Configure Windows signing
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          WINDOWS_CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          WINDOWS_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+        run: |
+          if (-not $env:WINDOWS_CSC_LINK) { throw 'WINDOWS_CSC_LINK is required' }
+          if (-not $env:WINDOWS_CSC_KEY_PASSWORD) { throw 'WINDOWS_CSC_KEY_PASSWORD is required' }
+          "CSC_LINK=$env:WINDOWS_CSC_LINK" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "CSC_KEY_PASSWORD=$env:WINDOWS_CSC_KEY_PASSWORD" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Disable signing discovery for Linux
+        if: runner.os == 'Linux'
+        shell: bash
+        run: echo 'CSC_IDENTITY_AUTO_DISCOVERY=false' >> "$GITHUB_ENV"
+
+      - name: Build release artifacts
+        shell: bash
+        run: npm run dist -- ${{ matrix.target }} --publish never
+
+      - name: Configure the Linux Chromium sandbox
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sandbox="$(find dist -path '*/chrome-sandbox' -type f -print -quit)"
+          test -n "$sandbox"
+          sudo chown root:root "$sandbox"
+          sudo chmod 4755 "$sandbox"
+
+      - name: Launch packaged application
+        run: npm run smoke:desktop
+
+      - name: Verify macOS signatures and notarization
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          app_path="$(find dist -type d -name 'OpenAqua Harness.app' -print -quit)"
+          test -n "$app_path"
+          codesign --verify --deep --strict --verbose=2 "$app_path"
+          spctl --assess --type execute --verbose=4 "$app_path"
+          dmg_path="$(find dist -maxdepth 1 -type f -name '*.dmg' -print -quit)"
+          test -n "$dmg_path"
+          while IFS= read -r dmg; do xcrun stapler validate "$dmg"; done \
+            < <(find dist -maxdepth 1 -type f -name '*.dmg' -print)
+
+      - name: Verify Windows signatures
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $files = Get-ChildItem dist -Recurse -Filter '*.exe'
+          if ($files.Count -eq 0) { throw 'No Windows executables were produced' }
+          foreach ($file in $files) {
+            $signature = Get-AuthenticodeSignature $file.FullName
+            if ($signature.Status -ne 'Valid') {
+              throw "Invalid Authenticode signature on $($file.FullName): $($signature.Status)"
+            }
+          }
+
+      - name: Generate platform checksums
+        run: npm run checksums
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-${{ matrix.id }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            dist/OpenAqua-Harness-*
+
+  publish:
+    name: Publish GitHub release
+    needs: [verify, package]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ needs.verify.outputs.tag }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24.15.0
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Prepare checksums and release notes
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ needs.verify.outputs.tag }}
+        run: |
+          cp SBOM.spdx.json THIRD_PARTY_NOTICES.md release-assets/
+          node scripts/generate-checksums.mjs release-assets
+          node - "$RELEASE_TAG" <<'NODE' > release-assets/RELEASE_NOTES.md
+          const fs = require('node:fs');
+          const version = process.argv[2].replace(/^v/, '');
+          const text = fs.readFileSync('CHANGELOG.md', 'utf8');
+          const start = text.indexOf(`## [${version}]`);
+          if (start < 0) throw new Error(`missing changelog section for ${version}`);
+          const bodyStart = text.indexOf('\n', start) + 1;
+          const next = text.indexOf('\n## [', bodyStart);
+          process.stdout.write(text.slice(bodyStart, next < 0 ? undefined : next).trim() + '\n');
+          NODE
+
+      - name: Create immutable GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.verify.outputs.tag }}
+        run: |
+          prerelease=()
+          if [[ "$RELEASE_TAG" == *-* ]]; then prerelease=(--prerelease); fi
+          mapfile -d '' assets < <(
+            find release-assets -maxdepth 1 -type f \
+              \( -name '*.dmg' -o -name '*.zip' -o -name '*.exe' \
+                 -o -name '*.AppImage' -o -name '*.tar.gz' \
+                 -o -name 'SHA256SUMS' -o -name 'SBOM.spdx.json' \
+                 -o -name 'THIRD_PARTY_NOTICES.md' \) -print0
+          )
+          gh release create "$RELEASE_TAG" "${assets[@]}" \
+            --verify-tag \
+            --title "OpenAqua Harness ${RELEASE_TAG#v}" \
+            --notes-file release-assets/RELEASE_NOTES.md \
+            "${prerelease[@]}"

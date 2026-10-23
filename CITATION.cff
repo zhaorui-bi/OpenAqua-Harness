@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use OpenAqua Harness in research, cite this software and the OpenAqua paper, and report the exact OpenAqua, dataset, index, and model versions used."
+type: software
+title: "OpenAqua Harness"
+version: "0.1.0-beta.1"
+date-released: "2026-10-23"
+authors:
+  - name: "OpenAqua Harness contributors"
+repository-code: "https://github.com/zhaorui-bi/OpenAqua-Harness"
+url: "https://github.com/zhaorui-bi/OpenAqua-Harness"
+license: MIT
+keywords:
+  - water treatment
+  - treatment train design
+  - environmental engineering
+  - scientific agents
+  - retrieval augmented generation
+  - MCP
+  - Electron

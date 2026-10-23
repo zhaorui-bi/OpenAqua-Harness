@@ -1,0 +1,157 @@
+{
+  "name": "openaqua-harness",
+  "version": "0.1.0-beta.1",
+  "private": true,
+  "description": "OpenAqua Harness — an agentic water-treatment research workbench with CLI, Web, and Electron desktop interfaces, built on OpenAqua and the open-source Kimi Code engine",
+  "main": "main.js",
+  "license": "MIT",
+  "author": "zhaorui-bi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zhaorui-bi/OpenAqua-Harness.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zhaorui-bi/OpenAqua-Harness/issues"
+  },
+  "homepage": "https://github.com/zhaorui-bi/OpenAqua-Harness#readme",
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "packageManager": "npm@12.0.2",
+  "scripts": {
+    "start": "electron .",
+    "postinstall": "node node_modules/electron/install.js",
+    "cli": "node engine/apps/openaqua-harness/dist/cli.mjs",
+    "setup": "pnpm -C engine install --frozen-lockfile && npm run build",
+    "sync:web": "node engine/apps/openaqua-harness/scripts/sync-web-ui.mjs",
+    "build": "npm run build:engine && npm run build:tui",
+    "build:engine": "pnpm -C engine --filter openaqua-harness build",
+    "build:tui": "pnpm -C engine --filter @moonshot-ai/kimi-code build",
+    "lint": "npm run lint:desktop && npm run lint:workers && pnpm -C engine exec oxlint apps/openaqua-harness/src apps/openaqua-harness/test apps/openaqua-harness/scripts --type-aware",
+    "lint:desktop": "engine/node_modules/.bin/oxlint main.js scripts/audit-runtime.mjs scripts/check-adapter.mjs scripts/check-repository.mjs scripts/check-tui.mjs scripts/generate-checksums.mjs scripts/generate-sbom.mjs scripts/generate-third-party-notices.mjs scripts/smoke-desktop.mjs --deny-warnings",
+    "lint:workers": "pnpm -C engine exec oxlint packages/kap-server/src/search/worker/host.ts packages/minidb/src/worker/text-build.ts --type-aware --deny-warnings",
+    "audit:runtime": "node scripts/audit-runtime.mjs",
+    "licenses": "node scripts/generate-third-party-notices.mjs && node scripts/generate-sbom.mjs",
+    "sbom": "node scripts/generate-sbom.mjs",
+    "checksums": "node scripts/generate-checksums.mjs",
+    "check:licenses": "node scripts/generate-third-party-notices.mjs --check && node scripts/generate-sbom.mjs --check",
+    "check:repo": "node scripts/check-repository.mjs",
+    "typecheck": "pnpm -C engine --filter openaqua-harness typecheck",
+    "test": "pnpm -C engine --filter openaqua-harness test:coverage",
+    "test:adapter": "node scripts/check-adapter.mjs",
+    "check:tui": "node scripts/check-tui.mjs",
+    "smoke:mcp": "npm run build:engine && node engine/apps/openaqua-harness/scripts/smoke-mcp.mjs",
+    "smoke:web": "node engine/apps/openaqua-harness/scripts/smoke-web.mjs",
+    "smoke:desktop": "node scripts/smoke-desktop.mjs",
+    "check": "node --check main.js && node --check scripts/audit-runtime.mjs && node --check scripts/check-adapter.mjs && node --check scripts/check-repository.mjs && node --check scripts/check-tui.mjs && node --check scripts/generate-checksums.mjs && node --check scripts/generate-sbom.mjs && node --check scripts/generate-third-party-notices.mjs && node --check scripts/smoke-desktop.mjs && node --check engine/apps/openaqua-harness/scripts/smoke-web.mjs && npm run lint && npm run typecheck && npm test && npm run test:adapter && npm run check:tui && npm run smoke:mcp && npm run smoke:web && npm run check:licenses && npm run check:repo",
+    "release:check": "npm run check && npm audit --audit-level=low && npm run audit:runtime",
+    "clean:dist": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "prepack": "npm run clean:dist && npm run build:engine",
+    "pack": "electron-builder --dir",
+    "predist": "npm run clean:dist && npm run build:engine",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "@fontsource-variable/cormorant-garamond": "^5.3.0",
+    "@fontsource-variable/noto-serif-sc": "^5.3.1",
+    "electron": "^44.9.1",
+    "electron-builder": "^26.15.3",
+    "pnpm": "12.4.1"
+  },
+  "build": {
+    "appId": "com.openaqua.harness",
+    "productName": "OpenAqua Harness",
+    "artifactName": "OpenAqua-Harness-${version}-${os}-${arch}.${ext}",
+    "asar": true,
+    "electronLanguages": [
+      "en",
+      "zh_CN",
+      "zh_TW"
+    ],
+    "files": [
+      "main.js",
+      "LICENSE"
+    ],
+    "extraResources": [
+      {
+        "from": "engine/apps/openaqua-harness/dist",
+        "to": "harness/dist"
+      },
+      {
+        "from": "engine/apps/openaqua-harness/skills",
+        "to": "harness/skills"
+      },
+      {
+        "from": "engine/apps/openaqua-harness/backend",
+        "to": "harness/backend"
+      },
+      {
+        "from": "engine/apps/openaqua-harness/web-ui",
+        "to": "web-ui"
+      },
+      {
+        "from": "build/logo-256.png",
+        "to": "brand/logo.png"
+      },
+      {
+        "from": "LICENSE",
+        "to": "licenses/OPENAQUA_HARNESS_LICENSE"
+      },
+      {
+        "from": "engine/LICENSE",
+        "to": "licenses/KIMI_CODE_LICENSE"
+      },
+      {
+        "from": "OPENAQUA_UPSTREAM_LICENSE",
+        "to": "licenses/OPENAQUA_UPSTREAM_LICENSE"
+      },
+      {
+        "from": "THIRD_PARTY_NOTICES.md",
+        "to": "licenses/THIRD_PARTY_NOTICES.md"
+      },
+      {
+        "from": "SBOM.spdx.json",
+        "to": "licenses/SBOM.spdx.json"
+      },
+      {
+        "from": "node_modules/electron/dist/LICENSE",
+        "to": "licenses/ELECTRON_LICENSE"
+      },
+      {
+        "from": "node_modules/electron/dist/LICENSES.chromium.html",
+        "to": "licenses/ELECTRON_THIRD_PARTY_NOTICES.html"
+      }
+    ],
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.education",
+      "hardenedRuntime": true,
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "linux": {
+      "icon": "build/icon.png",
+      "category": "Science",
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ]
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    }
+  },
+  "overrides": {
+    "@electron/get": "5.1.0"
+  },
+  "allowScripts": {
+    "electron-winstaller@5.4.0": true,
+    "pnpm@12.4.1": true
+  }
+}

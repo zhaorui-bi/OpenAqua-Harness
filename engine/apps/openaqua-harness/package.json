@@ -1,0 +1,31 @@
+{
+  "name": "openaqua-harness",
+  "version": "0.1.0-beta.1",
+  "private": true,
+  "displayName": "OpenAqua-Harness",
+  "description": "OpenAqua Harness — agentic early-stage water-treatment train design, evidence retrieval, constraint critique, and WContBench evaluation on the Kimi Code engine",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "openaqua": "dist/cli.mjs"
+  },
+  "scripts": {
+    "build": "tsdown && tsdown --config tsdown.worker.config.ts && node scripts/sync-web-ui.mjs",
+    "run": "tsx --tsconfig ./tsconfig.dev.json --import ../../build/register-raw-text-loader.mjs src/cli.ts run",
+    "chat": "tsx --tsconfig ./tsconfig.dev.json --import ../../build/register-raw-text-loader.mjs src/cli.ts chat",
+    "web": "tsx --tsconfig ./tsconfig.dev.json --import ../../build/register-raw-text-loader.mjs src/cli.ts web",
+    "doctor": "tsx --tsconfig ./tsconfig.dev.json --import ../../build/register-raw-text-loader.mjs src/cli.ts doctor",
+    "onboard": "tsx --tsconfig ./tsconfig.dev.json --import ../../build/register-raw-text-loader.mjs src/cli.ts onboard",
+    "tools": "tsx --tsconfig ./tsconfig.dev.json --import ../../build/register-raw-text-loader.mjs src/cli.ts tools",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@moonshot-ai/kap-server": "workspace:*",
+    "@moonshot-ai/kimi-code-sdk": "workspace:*",
+    "tsdown": "0.22.0",
+    "zod": "^4.3.6"
+  }
+}
