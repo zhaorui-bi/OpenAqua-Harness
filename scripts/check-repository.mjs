@@ -16,8 +16,16 @@ const harnessPackage = readJson('engine/apps/openaqua-harness/package.json');
 
 check(rootPackage.private === true, 'root package must remain private');
 check(
-  /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(rootPackage.version ?? ''),
-  `root package version must remain a SemVer identifier for desktop packaging: ${String(rootPackage.version)}`,
+  rootPackage.name === 'openaqua-harness',
+  `unexpected root package name: ${rootPackage.name}`,
+);
+check(
+  harnessPackage.name === rootPackage.name,
+  `package name mismatch: root=${rootPackage.name}, harness=${harnessPackage.name}`,
+);
+check(
+  /^\d+\.\d+\.\d+-beta\.\d+$/.test(rootPackage.version ?? ''),
+  `current OpenAqua Harness release must remain a numbered beta SemVer: ${String(rootPackage.version)}`,
 );
 check(rootPackage.engines?.node === '>=24.15.0', 'Node.js engine floor changed unexpectedly');
 check(
@@ -29,21 +37,33 @@ check(
   `package-lock version mismatch: root=${rootPackage.version}, lock=${packageLock.version}`,
 );
 check(
-  rootPackage.version.includes('-beta.'),
-  `current OpenAqua Harness release must remain a beta version: ${rootPackage.version}`,
+  rootPackage.version === packageLock.packages?.['']?.version,
+  `package-lock root entry mismatch: root=${rootPackage.version}, ` +
+    `lock root=${String(packageLock.packages?.['']?.version)}`,
 );
 
 const citation = readFileSync(path.join(root, 'CITATION.cff'), 'utf8');
 const citationVersion = /^version:\s*['"]?([^'"\s]+)['"]?$/m.exec(citation)?.[1];
+const citationDate = /^date-released:\s*['"]?([^'"\s]+)['"]?$/m.exec(citation)?.[1];
 check(
   citationVersion === harnessPackage.version,
   `citation version mismatch: citation=${String(citationVersion)}, harness=${harnessPackage.version}`,
 );
 const changelog = readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8');
 check(
-  changelog.includes(`## [${harnessPackage.version}]`),
-  `CHANGELOG.md has no release section for ${harnessPackage.version}`,
+  changelog.includes(`## [${harnessPackage.version}] - ${String(citationDate)}`),
+  `CHANGELOG.md release heading must match version ${harnessPackage.version} and citation date ${String(citationDate)}`,
 );
+for (const relativePath of [
+  'README.md',
+  'README.zh-CN.md',
+  'engine/apps/openaqua-harness/README.md',
+]) {
+  check(
+    readFileSync(path.join(root, relativePath), 'utf8').includes(harnessPackage.version),
+    `${relativePath} does not identify the current beta version ${harnessPackage.version}`,
+  );
+}
 const adapter = readFileSync(
   path.join(root, 'engine/apps/openaqua-harness/backend/openaqua_cli.py'),
   'utf8',
@@ -97,13 +117,15 @@ for (const rule of [
 
 const markdownFiles = [
   'README.md',
+  'README.zh-CN.md',
   'CHANGELOG.md',
   'CONTRIBUTING.md',
   'SECURITY.md',
-  'docs/RELEASE.md',
-  'docs/SCIENTIFIC_WORKFLOWS.md',
+  ...markdownFilesUnder('docs'),
   'engine/apps/openaqua-harness/README.md',
-];
+  ...markdownFilesUnder('engine/apps/openaqua-harness/skills'),
+  'engine/apps/openaqua-harness/theme/RESEARCH.md',
+].sort();
 for (const relativePath of markdownFiles) validateMarkdown(relativePath);
 
 const skillsRoot = path.join(root, 'engine/apps/openaqua-harness/skills');
@@ -175,6 +197,21 @@ if (errors.length > 0) {
 process.stdout.write(
   `repository check: ok (${String(skillNames.length)} skills, ${String(markdownFiles.length)} Markdown files)\n`,
 );
+
+function markdownFilesUnder(relativeDirectory) {
+  const found = [];
+  const visit = (directory) => {
+    for (const entry of readdirSync(path.join(root, directory), {
+      withFileTypes: true,
+    })) {
+      const relativePath = path.join(directory, entry.name);
+      if (entry.isDirectory()) visit(relativePath);
+      else if (entry.isFile() && entry.name.endsWith('.md')) found.push(relativePath);
+    }
+  };
+  visit(relativeDirectory);
+  return found;
+}
 
 function validateMarkdown(relativePath) {
   const absolutePath = path.join(root, relativePath);

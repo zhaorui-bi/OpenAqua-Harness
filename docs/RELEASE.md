@@ -9,7 +9,8 @@ channel.
 A release candidate is ready only when all of the following are true:
 
 - the release commit is checked out in a clean root Git worktree;
-- root, harness, changelog, citation, and tag versions agree;
+- root package, lockfile, Harness package, Python adapter, changelog, citation,
+  and tag versions agree;
 - `npm run release:check` passes on the pinned Node.js release with Python 3.12 available for adapter tests;
 - the Node 26 compatibility job passes;
 - the built Web server reports a non-degraded global-search worker;
@@ -46,13 +47,18 @@ Before tagging, update all of the following in one commit:
 
 - `package.json` and `package-lock.json`;
 - `engine/apps/openaqua-harness/package.json`;
+- `ADAPTER_VERSION` in `engine/apps/openaqua-harness/backend/openaqua_cli.py`;
 - `CHANGELOG.md` and its comparison links;
-- `CITATION.cff` and its release date.
+- `CITATION.cff`, its release date, and the visible README release labels.
 
-The repository check rejects version drift. Root package, Harness package,
-`CITATION.cff`, changelog section, and `v*` Git tag must all use the same SemVer
-identifier, including any prerelease suffix. Never replace assets attached to
-an older version with a build from a newer commit.
+The repository check rejects version drift. Root package, lockfile root entry,
+Harness package, Python adapter, `CITATION.cff`, changelog section, and visible
+README labels must all use the same SemVer identifier, including any prerelease
+suffix. For the current Beta channel, the repository check intentionally
+requires a numbered `x.y.z-beta.n` version; promoting to another channel must
+update that guard in the same reviewed release commit. The Release workflow
+additionally requires an annotated `v*` Git tag with that exact version. Never
+replace assets attached to an older version with a build from a newer commit.
 
 ## Scientific acceptance smoke
 

@@ -6,6 +6,7 @@ import {
   constants,
   existsSync,
   mkdtempSync,
+  readFileSync,
   readdirSync,
   rmSync,
   statSync,
@@ -15,6 +16,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const productVersion = JSON.parse(
+  readFileSync(path.join(root, 'package.json'), 'utf8'),
+).version;
 const executable = process.argv[2]
   ? path.resolve(process.argv[2])
   : findPackagedExecutable(path.join(root, 'dist'));
@@ -45,6 +49,8 @@ try {
   ]) {
     assertFile(path.join(resources, relativePath), `packaged resource ${relativePath}`);
   }
+  assertPackagedVersions(resources, productVersion);
+  assertNoPythonCache(path.join(resources, 'harness/backend'));
 
   const args = [
     '--smoke-test',
@@ -152,6 +158,45 @@ function launchCommand(filePath, args) {
 function assertFile(filePath, label) {
   if (!existsSync(filePath) || !statSync(filePath).isFile()) {
     throw new Error(`${label} is missing: ${filePath}`);
+  }
+}
+
+function assertPackagedVersions(resourcesDirectoryPath, expectedVersion) {
+  const adapterPath = path.join(
+    resourcesDirectoryPath,
+    'harness/backend/openaqua_cli.py',
+  );
+  const adapterVersion = /^ADAPTER_VERSION\s*=\s*["']([^"']+)["']$/m.exec(
+    readFileSync(adapterPath, 'utf8'),
+  )?.[1];
+  if (adapterVersion !== expectedVersion) {
+    throw new Error(
+      `packaged adapter version mismatch: expected ${expectedVersion}, found ${String(adapterVersion)}`,
+    );
+  }
+
+  const sbomPath = path.join(resourcesDirectoryPath, 'licenses/SBOM.spdx.json');
+  const sbom = JSON.parse(readFileSync(sbomPath, 'utf8'));
+  const product = sbom.packages?.find(
+    (candidate) => candidate.SPDXID === 'SPDXRef-OpenAqua-Harness',
+  );
+  if (product?.versionInfo !== expectedVersion) {
+    throw new Error(
+      `packaged SBOM version mismatch: expected ${expectedVersion}, found ${String(product?.versionInfo)}`,
+    );
+  }
+}
+
+function assertNoPythonCache(backendDirectory) {
+  const files = [];
+  walk(backendDirectory, 0, files);
+  const cached = files.find(
+    (filePath) =>
+      filePath.endsWith('.pyc') ||
+      filePath.includes(`${path.sep}__pycache__${path.sep}`),
+  );
+  if (cached !== undefined) {
+    throw new Error(`packaged backend contains Python cache output: ${cached}`);
   }
 }
 
