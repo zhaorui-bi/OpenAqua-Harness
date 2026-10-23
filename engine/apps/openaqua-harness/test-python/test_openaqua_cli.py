@@ -11,6 +11,9 @@ from pathlib import Path
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 ADAPTER = PACKAGE_ROOT / "backend" / "openaqua_cli.py"
+PRODUCT_VERSION = json.loads(
+    (PACKAGE_ROOT / "package.json").read_text(encoding="utf-8")
+)["version"]
 
 
 class OpenAquaAdapterTests(unittest.TestCase):
@@ -28,6 +31,15 @@ class OpenAquaAdapterTests(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
+
+    def test_version_matches_harness_beta_release(self) -> None:
+        result = self._run("--version")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(
+            result.stdout.startswith(f"openaqua-harness-adapter {PRODUCT_VERSION} "),
+            result.stdout,
+        )
 
     def test_normalize_keeps_stdout_machine_readable(self) -> None:
         self._write(

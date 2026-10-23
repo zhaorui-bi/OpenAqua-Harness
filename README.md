@@ -4,6 +4,8 @@
 
 <h1 align="center">OpenAqua Harness</h1>
 
+<p align="center"><strong>Beta release · v0.1.0-beta.1</strong></p>
+
 <p align="center">
   <strong>An agentic workbench for evidence-grounded, early-stage water-treatment train design.</strong>
 </p>

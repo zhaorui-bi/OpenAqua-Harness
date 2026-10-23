@@ -11,6 +11,7 @@ const errors = [];
 const readJson = (relativePath) =>
   JSON.parse(readFileSync(path.join(root, relativePath), 'utf8'));
 const rootPackage = readJson('package.json');
+const packageLock = readJson('package-lock.json');
 const harnessPackage = readJson('engine/apps/openaqua-harness/package.json');
 
 check(rootPackage.private === true, 'root package must remain private');
@@ -19,6 +20,18 @@ check(
   `root package version must remain a SemVer identifier for desktop packaging: ${String(rootPackage.version)}`,
 );
 check(rootPackage.engines?.node === '>=24.15.0', 'Node.js engine floor changed unexpectedly');
+check(
+  rootPackage.version === harnessPackage.version,
+  `package version mismatch: root=${rootPackage.version}, harness=${harnessPackage.version}`,
+);
+check(
+  rootPackage.version === packageLock.version,
+  `package-lock version mismatch: root=${rootPackage.version}, lock=${packageLock.version}`,
+);
+check(
+  rootPackage.version.includes('-beta.'),
+  `current OpenAqua Harness release must remain a beta version: ${rootPackage.version}`,
+);
 
 const citation = readFileSync(path.join(root, 'CITATION.cff'), 'utf8');
 const citationVersion = /^version:\s*['"]?([^'"\s]+)['"]?$/m.exec(citation)?.[1];
@@ -30,6 +43,15 @@ const changelog = readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8');
 check(
   changelog.includes(`## [${harnessPackage.version}]`),
   `CHANGELOG.md has no release section for ${harnessPackage.version}`,
+);
+const adapter = readFileSync(
+  path.join(root, 'engine/apps/openaqua-harness/backend/openaqua_cli.py'),
+  'utf8',
+);
+const adapterVersion = /^ADAPTER_VERSION\s*=\s*["']([^"']+)["']$/m.exec(adapter)?.[1];
+check(
+  adapterVersion === harnessPackage.version,
+  `adapter version mismatch: adapter=${String(adapterVersion)}, harness=${harnessPackage.version}`,
 );
 
 const requiredFiles = [

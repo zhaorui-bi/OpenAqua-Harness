@@ -23,7 +23,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Callable
 
-ADAPTER_VERSION = "1.0.0"
+ADAPTER_VERSION = "0.1.0-beta.1"
 CALLER_CWD = Path.cwd()
 
 

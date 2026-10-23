@@ -4,6 +4,8 @@
 
 <h1 align="center">OpenAqua Harness</h1>
 
+<p align="center"><strong>Beta 测试版 · v0.1.0-beta.1</strong></p>
+
 <p align="center">
   <strong>面向循证早期水处理工艺链设计的智能体化研究工作台。</strong>
 </p>
