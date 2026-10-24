@@ -21,7 +21,7 @@ Hugging Face dataset revision `cc2d3c620e8ada7c62fa922cf3a827d8b42889e3`.
 | `openaqua web [options]` | Start kap-server and the branded local Web UI. |
 | `openaqua doctor [--json] [--probe]` | Check Node, storage, model configuration, backend health, MCP, Web assets, and skills. |
 | `openaqua onboard [options]` | Configure the home directory, API model provider, OpenAqua repository/command, MCP, and skills. |
-| `openaqua tools [--json]` | List all 16 tool schemas and annotations. |
+| `openaqua tools [--json]` | List all 18 tool schemas and annotations. |
 | `openaqua info` / `--version` | Print version and resolved paths. |
 
 ## Development
@@ -68,14 +68,19 @@ theme/openaqua.css            branded Web visual system
 scripts/sync-web-ui.mjs       deterministic Web UI branding
 ```
 
-Recommendation, retrieval, index building, knowledge staging, and WContBench
-evaluation are asynchronous. They return a `jobId`; lifecycle state, bounded
+The synchronous case-assessment tool turns a normalized query into a versioned
+scientific case state with deterministic readiness blockers and prioritized
+next-information actions. Recommendation, retrieval, index building, knowledge
+staging, and WContBench evaluation are asynchronous. They return a `jobId`; lifecycle state, bounded
 logs, output metadata, and `run-manifest.json` remain available after the
 initiating session exits.
 
-The manifest is request-level provenance. A matching `requestSha256` does not
-prove identical knowledge snapshots, generated indexes, remote model responses,
-or treatment recommendations. Preserve those identities separately.
+The manifest keeps request and result identities separate. `requestSha256`
+includes non-secret adapter-reported model/retrieval/planning settings and
+explicit environment overrides, while completed jobs capture a verified
+fingerprint of the configured output when present. API keys are never recorded.
+Neither identity freezes remote provider behavior; preserve knowledge, index,
+model, and result artifacts separately.
 
 ## Generated assets
 

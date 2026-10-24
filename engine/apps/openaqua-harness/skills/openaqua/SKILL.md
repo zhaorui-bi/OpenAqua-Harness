@@ -1,6 +1,6 @@
 ---
 name: openaqua
-description: Run a focused OpenAqua water-treatment operation: inspect readiness, browse the taxonomy, normalize a source-water query, retrieve evidence, recommend treatment trains, check constraints, build indexes, stage knowledge, evaluate predictions, or inspect durable jobs. Use for one query or one bounded operation. For benchmark suites or repeated comparisons, use openaqua-campaign.
+description: Run a focused OpenAqua water-treatment operation: inspect runtime readiness, browse the taxonomy, normalize or assess a source-water case, retrieve evidence, recommend treatment trains, check constraints, build indexes, stage knowledge, evaluate predictions, or inspect durable jobs. Use for one query or one bounded operation. For benchmark suites or repeated comparisons, use openaqua-campaign.
 ---
 
 # OpenAqua water-treatment operations
@@ -61,6 +61,9 @@ contaminant list empty; report that limitation rather than guessing.
   knowledge assets, indexes, and optional OpenRouter setup.
 - `openaqua_catalog` — browse/search canonical contaminants and treatment units.
 - `openaqua_normalize_query` — run the parser and taxonomy normalization only.
+- `openaqua_assess_case` — build a machine-readable case state and a deterministic
+  readiness audit with critical blockers and prioritized next-information actions.
+  It is a screening checklist, not a calibrated risk or success probability.
 - `openaqua_retrieve_evidence` — retrieve unit-level and case-level evidence
   without asking the planner to produce final recommendations.
 - `openaqua_recommend` — run the complete five-agent pipeline and write a result
@@ -75,6 +78,10 @@ contaminant list empty; report that limitation rather than guessing.
 - `openaqua_evaluate_trains` — score treatment-train predictions with WContBench
   precision, recall, F1, coverage, hit rate, and case-level acceptability.
 - `openaqua_evaluate_retrieval` — score retrieval predictions at requested k.
+- `openaqua_audit_report` — create a versioned claim–evidence ledger and check
+  citation structure, declared support types, failed constraints, uncertainty,
+  and selected quantitative-claim signals. It does not test semantic entailment
+  or establish source quality, performance, safety, or compliance.
 
 ## Run at the right scale
 
@@ -82,8 +89,9 @@ Use four explicit gates:
 
 1. **Readiness** — status is healthy; dependencies, processed data, and indexes
    are available.
-2. **Normalization** — one representative query maps to the expected source,
-   contaminant taxonomy, targets, and constraints.
+2. **Normalization and case assessment** — one representative query maps to the
+   expected source, contaminant taxonomy, targets, and constraints; critical
+   information gaps are resolved or explicitly accepted before recommendation.
 3. **Smoke case** — one complete recommendation or retrieval run produces a
    readable result and traceable evidence.
 4. **Evaluation/campaign** — only after the smoke case, run a declared benchmark
@@ -103,10 +111,13 @@ jobs.
 - Use `openaqua_job_status` for lifecycle state and timing.
 - Use `openaqua_job_manifest` before comparing or handing off a run. It records
   validated parameters, the backend command and adapter-reported revision,
-  runtime identity, input hashes, inline-payload hashes, and `requestSha256`.
-- A matching request fingerprint does **not** prove identical Hugging Face data,
-  generated indexes, OpenRouter responses, or engineering outcomes. Preserve
-  those versions and result files separately.
+  runtime identity, non-secret effective scientific settings, input hashes,
+  inline-payload hashes, and `requestSha256`.
+  After completion it also records `result.resultSha256` for the configured
+  output when that path can be captured.
+- A matching request fingerprint does **not** prove identical OpenRouter
+  responses or engineering outcomes. Compare the result fingerprint, preserve
+  the actual result files, and retain dataset/index/model identities separately.
 - Use bounded `openaqua_job_log` tails or `errors`/`events` views; do not
   busy-poll or paste full logs into the conversation.
 - Use `openaqua_job_artifacts` for bounded output metadata. Symbolic links are

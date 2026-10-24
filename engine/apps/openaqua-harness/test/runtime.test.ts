@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import {
   chmodSync,
   lstatSync,
@@ -41,6 +42,7 @@ import {
   waitForJob,
 } from '../src/openaqua/jobs';
 import { openAquaToolAnnotations, OPENAQUA_TOOLS } from '../src/openaqua/tools';
+import { readEngineeringRunManifest } from '../src/openaqua/provenance';
 
 const tempDirs: string[] = [];
 const harnessVersion = (
@@ -275,9 +277,11 @@ describe('MCP configuration persistence', () => {
 
 describe('OpenAqua tool catalog', () => {
   it('publishes bounded water-treatment schemas and MCP safety annotations', () => {
-    expect(OPENAQUA_TOOLS).toHaveLength(16);
-    expect(new Set(OPENAQUA_TOOLS.map((tool) => tool.name)).size).toBe(16);
+    expect(OPENAQUA_TOOLS).toHaveLength(18);
+    expect(new Set(OPENAQUA_TOOLS.map((tool) => tool.name)).size).toBe(18);
 
+    const assess = OPENAQUA_TOOLS.find((tool) => tool.name === 'openaqua_assess_case');
+    const audit = OPENAQUA_TOOLS.find((tool) => tool.name === 'openaqua_audit_report');
     const recommend = OPENAQUA_TOOLS.find((tool) => tool.name === 'openaqua_recommend');
     const constraints = OPENAQUA_TOOLS.find(
       (tool) => tool.name === 'openaqua_check_constraints',
@@ -285,6 +289,8 @@ describe('OpenAqua tool catalog', () => {
     const retrievalEval = OPENAQUA_TOOLS.find(
       (tool) => tool.name === 'openaqua_evaluate_retrieval',
     );
+    expect(assess?.inputSchema['waterQuality']).toBeDefined();
+    expect(audit?.inputSchema['reportFile']).toBeDefined();
     expect(recommend?.inputSchema['waterQuality']).toBeDefined();
     expect(recommend?.inputSchema['topK']?.safeParse(11).success).toBe(false);
     expect(constraints?.inputSchema['candidateChains']?.safeParse([]).success).toBe(false);
@@ -297,6 +303,15 @@ describe('OpenAqua tool catalog', () => {
     expect(openAquaToolAnnotations('openaqua_normalize_query')).toMatchObject({
       readOnlyHint: true,
       openWorldHint: true,
+    });
+    expect(openAquaToolAnnotations('openaqua_assess_case')).toMatchObject({
+      readOnlyHint: true,
+      openWorldHint: true,
+    });
+    expect(openAquaToolAnnotations('openaqua_audit_report')).toMatchObject({
+      readOnlyHint: false,
+      idempotentHint: true,
+      openWorldHint: false,
     });
     expect(openAquaToolAnnotations('openaqua_job_manifest').readOnlyHint).toBe(true);
     expect(openAquaToolAnnotations('openaqua_job_cancel').destructiveHint).toBe(true);
@@ -329,6 +344,57 @@ describe('OpenAqua tool catalog', () => {
 });
 
 describe('background jobs', () => {
+  it('continues to read schema-version-1 engineering manifests', () => {
+    const root = makeTempDir();
+    const workDir = path.join(root, 'work');
+    const filePath = path.join(root, 'run-manifest.json');
+    const fingerprintPayload = {
+      schemaVersion: 1,
+      toolName: 'openaqua_recommend',
+      operation: 'recommend',
+      backend: { source: 'configured-command', command: ['openaqua'] },
+      command: ['openaqua', 'recommend'],
+      workDir,
+      configuredOutput: null,
+      requestedParameters: {},
+      inputs: [],
+      payloads: [],
+    };
+    const manifest = {
+      schemaVersion: 1,
+      kind: 'openaqua.engineering-run',
+      jobId: 'job_20200101000000_abcdef',
+      createdAt: '2020-01-01T00:00:00.000Z',
+      toolName: 'openaqua_recommend',
+      operation: 'recommend',
+      workDir,
+      command: ['openaqua', 'recommend'],
+      backend: { source: 'configured-command', command: ['openaqua'] },
+      runtime: {
+        harnessVersion: '0.1.0',
+        nodeVersion: process.version,
+        platform: process.platform,
+        architecture: process.arch,
+      },
+      parameters: {
+        resolution: 'requested-only',
+        values: {},
+        note: 'legacy manifest fixture',
+      },
+      inputs: [],
+      payloads: [],
+      inputIntegrityComplete: true,
+      requestSha256: createHash('sha256')
+        .update(canonicalJsonForTest(fingerprintPayload))
+        .digest('hex'),
+    };
+    writeFileSync(filePath, JSON.stringify(manifest));
+
+    expect(readEngineeringRunManifest(filePath)).toMatchObject({
+      manifest: { schemaVersion: 1, requestSha256: manifest.requestSha256 },
+    });
+  });
+
   it('persists engineering request provenance with content fingerprints', async () => {
     const root = makeTempDir();
     const workDir = path.join(root, 'work');
@@ -358,9 +424,17 @@ describe('background jobs', () => {
           OPENAQUA_COMMAND: JSON.stringify([
             process.execPath,
             '-e',
-            'process.stdout.write("recommendation completed\\n")',
+            [
+              'const fs = require("node:fs")',
+              'const index = process.argv.indexOf("--output")',
+              'if (index >= 0) fs.writeFileSync(process.argv[index + 1], "{\\"ok\\":true}\\n")',
+              'else if (process.argv.includes("identity")) process.stdout.write(JSON.stringify({ models: { planner_model: "fixture/planner", api_key: "must-not-persist" }, retrieval: { top_k_retrieval: 10 } }))',
+              'else process.stdout.write(process.version)',
+            ].join(';'),
           ]),
           OPENAQUA_WORKDIR: workDir,
+          OPENAQUA_PLANNER_MODEL: 'environment/planner',
+          OPENROUTER_API_KEY: 'must-not-persist',
         },
       },
     );
@@ -374,7 +448,7 @@ describe('background jobs', () => {
     const engineering = readJobRunManifest(jobsRoot, jobId);
     expect(engineering?.error).toBeUndefined();
     expect(engineering?.manifest).toMatchObject({
-      schemaVersion: 1,
+      schemaVersion: 2,
       kind: 'openaqua.engineering-run',
       jobId,
       toolName: 'openaqua_recommend',
@@ -386,6 +460,18 @@ describe('background jobs', () => {
     expect(engineering?.manifest?.parameters.resolution).toBe('requested-only');
     expect(engineering?.manifest?.parameters.values['wait']).toBeUndefined();
     expect(engineering?.manifest?.parameters.values['topK']).toBe(2);
+    expect(engineering?.manifest?.scientificConfiguration?.values).toMatchObject({
+      adapterReported: {
+        models: { planner_model: 'fixture/planner' },
+        retrieval: { top_k_retrieval: 10 },
+      },
+      environmentOverrides: {
+        OPENAQUA_PLANNER_MODEL: 'environment/planner',
+      },
+    });
+    expect(JSON.stringify(engineering?.manifest?.scientificConfiguration)).not.toContain(
+      'must-not-persist',
+    );
     expect(engineering?.manifest?.inputs[0]).toMatchObject({
       role: 'query',
       path: queryPath,
@@ -394,6 +480,15 @@ describe('background jobs', () => {
     });
     expect(engineering?.manifest?.inputs[0]?.sha256).toMatch(/^[a-f0-9]{64}$/);
     expect(engineering?.manifest?.requestSha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(engineering?.manifest?.result).toMatchObject({
+      output: {
+        role: 'configured-output',
+        path: path.join(workDir, 'recommendations.json'),
+        kind: 'file',
+      },
+    });
+    expect(engineering?.manifest?.result?.output.sha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(engineering?.manifest?.result?.resultSha256).toMatch(/^[a-f0-9]{64}$/);
 
     const manifestTool = OPENAQUA_TOOLS.find(
       (tool) => tool.name === 'openaqua_job_manifest',
@@ -403,19 +498,109 @@ describe('background jobs', () => {
     const inspectedContent = inspected.content[0];
     if (inspectedContent === undefined) throw new Error('manifest tool returned no content');
     expect(JSON.parse(inspectedContent.text)).toMatchObject({
-      engineeringRun: { jobId, inputIntegrityComplete: true },
-      artifacts: { exists: false },
+      engineeringRun: {
+        jobId,
+        inputIntegrityComplete: true,
+        result: { output: { kind: 'file' } },
+      },
+      artifacts: { exists: true },
     });
 
     const manifestPath = path.join(finished!.dir, 'run-manifest.json');
     if (process.platform !== 'win32') {
       expect(lstatSync(manifestPath).mode & 0o077).toBe(0);
     }
-    const tampered = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
+    const original = JSON.parse(readFileSync(manifestPath, 'utf8')) as Record<string, unknown>;
+    const configurationTampered = structuredClone(original);
+    const scientificConfiguration = configurationTampered[
+      'scientificConfiguration'
+    ] as Record<string, unknown>;
+    const scientificValues = scientificConfiguration['values'] as Record<string, unknown>;
+    scientificValues['environmentOverrides'] = { OPENAQUA_PLANNER_MODEL: 'tampered' };
+    writeFileSync(manifestPath, JSON.stringify(configurationTampered));
+    expect(readJobRunManifest(jobsRoot, jobId)?.error).toMatch(/fingerprint/);
+
+    const resultTampered = structuredClone(original);
+    const result = resultTampered['result'] as Record<string, unknown>;
+    const resultOutput = result['output'] as Record<string, unknown>;
+    resultOutput['sha256'] = '0'.repeat(64);
+    writeFileSync(manifestPath, JSON.stringify(resultTampered));
+    expect(readJobRunManifest(jobsRoot, jobId)?.error).toMatch(/schema/);
+
+    const tampered = structuredClone(original);
     tampered['operation'] = 'tampered';
     writeFileSync(manifestPath, JSON.stringify(tampered));
     expect(readJobRunManifest(jobsRoot, jobId)?.error).toMatch(/fingerprint/);
     expect((await manifestTool.run({ jobId }, { jobsRoot, env: {} })).isError).toBe(true);
+  }, 15_000);
+
+  it('recursively fingerprints benchmark directories for comparable evaluations', async () => {
+    const root = makeTempDir();
+    const workDir = path.join(root, 'work');
+    const jobsRoot = path.join(root, 'jobs');
+    const benchmarkDir = path.join(workDir, 'benchmark');
+    const splitDir = path.join(benchmarkDir, 'test');
+    const predictions = path.join(workDir, 'predictions.json');
+    mkdirSync(splitDir, { recursive: true });
+    writeFileSync(path.join(splitDir, 'case.json'), '{"case_id":"case-1"}\n');
+    writeFileSync(predictions, '[]\n');
+    const evaluate = OPENAQUA_TOOLS.find(
+      (tool) => tool.name === 'openaqua_evaluate_trains',
+    );
+    if (evaluate === undefined) throw new Error('train evaluation tool is missing');
+    const ctx = {
+      jobsRoot,
+      env: {
+        OPENAQUA_COMMAND: JSON.stringify([
+          process.execPath,
+          '-e',
+          'process.stdout.write("{}")',
+        ]),
+        OPENAQUA_WORKDIR: workDir,
+      },
+    };
+
+    const firstLaunch = await evaluate.run(
+      {
+        benchmarkDir: 'benchmark',
+        predictions: 'predictions.json',
+        output: 'first.json',
+      },
+      ctx,
+    );
+    const firstContent = firstLaunch.content[0];
+    if (firstContent === undefined) throw new Error('first evaluation returned no content');
+    const firstPayload = JSON.parse(firstContent.text) as { job: { jobId: string } };
+    await waitForJob(jobsRoot, firstPayload.job.jobId, 10_000, 20);
+    const first = readJobRunManifest(jobsRoot, firstPayload.job.jobId)?.manifest;
+    const firstBenchmark = first?.inputs.find((input) => input.role === 'benchmark');
+    expect(first?.inputIntegrityComplete).toBe(true);
+    expect(firstBenchmark).toMatchObject({
+      kind: 'directory',
+      entryCount: 2,
+      fileCount: 1,
+      integrityComplete: true,
+      truncated: false,
+    });
+    expect(firstBenchmark?.sha256).toMatch(/^[a-f0-9]{64}$/);
+
+    writeFileSync(path.join(splitDir, 'case.json'), '{"case_id":"case-1","changed":true}\n');
+    const secondLaunch = await evaluate.run(
+      {
+        benchmarkDir: 'benchmark',
+        predictions: 'predictions.json',
+        output: 'second.json',
+      },
+      ctx,
+    );
+    const secondContent = secondLaunch.content[0];
+    if (secondContent === undefined) throw new Error('second evaluation returned no content');
+    const secondPayload = JSON.parse(secondContent.text) as { job: { jobId: string } };
+    await waitForJob(jobsRoot, secondPayload.job.jobId, 10_000, 20);
+    const second = readJobRunManifest(jobsRoot, secondPayload.job.jobId)?.manifest;
+    const secondBenchmark = second?.inputs.find((input) => input.role === 'benchmark');
+    expect(secondBenchmark?.sha256).not.toBe(firstBenchmark?.sha256);
+    expect(second?.requestSha256).not.toBe(first?.requestSha256);
   }, 15_000);
 
   it('runs through the detached runner and exposes bounded, cursor-based log views', async () => {
@@ -565,6 +750,19 @@ describe('background jobs', () => {
     expect(getJob(jobsRoot, started.id)?.status).toBe('cancelled');
   }, 15_000);
 });
+
+function canonicalJsonForTest(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) {
+    return `[${value.map((entry) => canonicalJsonForTest(entry)).join(',')}]`;
+  }
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([, entry]) => entry !== undefined)
+    .toSorted(([left], [right]) => left.localeCompare(right));
+  return `{${entries
+    .map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJsonForTest(entry)}`)
+    .join(',')}}`;
+}
 
 function makeTempDir(): string {
   const dir = mkdtempSync(path.join(tmpdir(), 'openaqua-harness-test-'));

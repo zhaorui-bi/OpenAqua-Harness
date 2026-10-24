@@ -40,7 +40,7 @@ MIT 许可的 [Kimi Code](https://github.com/MoonshotAI/kimi-code) 智能体
 | 能力 | 说明 |
 | --- | --- |
 | **五智能体流水线** | 查询归一化、混合检索、受控分类体系内的工艺规划、规则审查与证据绑定解释。 |
-| **16 个 MCP 工具** | 覆盖状态、分类目录、推荐、检索、约束检查、索引、知识暂存、WContBench 评测与任务管理。 |
+| **18 个 MCP 工具** | 覆盖运行状态、科学案例完备性评估、推荐报告审计、分类目录、推荐、检索、约束检查、索引、知识暂存、WContBench 评测与任务管理。 |
 | **多种界面** | 完整 TUI、一次性 CLI、轻量 REPL、本地 Web UI 和 Electron 桌面端。 |
 | **持久化工程任务** | 长任务在会话退出后仍可恢复，并记录状态、日志、输出、输入哈希、JSON 载荷哈希与请求指纹。 |
 | **双模型层** | Harness 对话智能体使用 API 提供方；OpenAqua 后端可选使用 `OPENROUTER_API_KEY`。 |
@@ -179,6 +179,7 @@ Windows 用户请使用 `npm run cli -- <命令>` 代替 `./bin/openaqua`。
 | `openaqua_status` | 检查 Python、依赖、OpenAqua 版本、数据、索引和 OpenRouter。 |
 | `openaqua_catalog` | 搜索标准污染物和处理单元名称。 |
 | `openaqua_normalize_query` | 仅执行解析与分类体系归一化。 |
+| `openaqua_assess_case` | 构建结构化案例状态，并在推荐前识别关键阻断项和待补充信息。 |
 | `openaqua_recommend` | 执行完整五智能体流程。 |
 | `openaqua_retrieve_evidence` | 返回归一化查询以及单元级/案例级证据。 |
 | `openaqua_check_constraints` | 对候选工艺链执行分类、消毒、浓水和能耗规则。 |
@@ -186,6 +187,7 @@ Windows 用户请使用 `npm run cli -- <命令>` 代替 `./bin/openaqua`。
 | `openaqua_ingest_knowledge` | 暂存 `kb_unit`/`kb_case` 记录并可选重建。 |
 | `openaqua_evaluate_trains` | 运行 WContBench 工艺链指标。 |
 | `openaqua_evaluate_retrieval` | 运行 WContBench 检索指标。 |
+| `openaqua_audit_report` | 构建结构化“主张—证据”账本，并识别证据结构缺失、约束失败及部分定量主张风险。 |
 | `openaqua_job_*` | 恢复任务、读取状态/清单/日志/产物或取消任务。 |
 
 ## 后端解析
@@ -213,9 +215,12 @@ Harness 按以下顺序查找兼容后端：
 └── run-manifest.json
 ```
 
-`run-manifest.json` 记录已校验参数、后端/运行时身份、常规文件 SHA-256、
-内联 JSON 载荷哈希、输出路径和 `requestSha256`。该指纹只代表“请求相同”，
-不代表 Hugging Face 数据、索引、远程模型响应或工程结果完全相同。
+`run-manifest.json` 记录已校验参数、后端/运行时身份、非敏感的模型/检索/
+规划设置、常规文件 SHA-256、有界递归的基准目录指纹、内联 JSON 载荷哈希、
+输出路径和 `requestSha256`，且绝不记录 API 密钥。
+任务结束后，同一清单还会写入经过独立校验的输出文件或目录指纹。目录指纹
+会报告是否完整且不会跟随符号链接；请求指纹仍不代表远程模型响应或工程结果
+完全相同。
 
 ## 已知边界
 

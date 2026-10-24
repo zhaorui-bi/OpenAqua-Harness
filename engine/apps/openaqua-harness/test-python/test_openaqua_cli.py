@@ -41,6 +41,17 @@ class OpenAquaAdapterTests(unittest.TestCase):
             result.stdout,
         )
 
+    def test_identity_reports_effective_non_secret_scientific_configuration(self) -> None:
+        result = self._run("identity")
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["models"]["default_model"], "fixture/default")
+        self.assertEqual(payload["models"]["planner_model"], "fixture/planner")
+        self.assertEqual(payload["models"]["llm_temperature"], 0.2)
+        self.assertEqual(payload["retrieval"]["top_k_retrieval"], 10)
+        self.assertNotIn("api_key", json.dumps(payload).lower())
+
     def test_normalize_keeps_stdout_machine_readable(self) -> None:
         self._write(
             self.agent / "app" / "agents" / "parser_agent.py",
@@ -70,6 +81,70 @@ class OpenAquaAdapterTests(unittest.TestCase):
         self.assertIn("upstream diagnostic on stdout", result.stderr)
         self.assertNotIn("upstream diagnostic", result.stdout)
 
+    def test_assess_case_builds_readiness_state_and_prioritized_actions(self) -> None:
+        self._write(
+            self.agent / "app" / "agents" / "parser_agent.py",
+            """
+            class _Normalized:
+                def model_dump(self, mode="json"):
+                    return {
+                        "query_id": "arsenic-case",
+                        "source_water": "groundwater",
+                        "water_quality": {"arsenic_ug_L": 150.0, "extra": {}},
+                        "contaminants": ["arsenic"],
+                        "treatment_targets": {
+                            "arsenic_ug_L": 10.0,
+                            "compliance_standard": "WHO",
+                            "extra": {},
+                        },
+                        "constraints": {
+                            "brine_disposal": False,
+                            "use_for_drinking": True,
+                            "extra": {},
+                        },
+                        "context": "rural drinking-water supply",
+                        "missing_fields": [],
+                        "assumptions": [],
+                        "normalization_notes": ["fixture"],
+                    }
+
+
+            class TaskParserAgent:
+                def run(self, query):
+                    return _Normalized()
+            """,
+        )
+        query = self.root / "query.json"
+        query.write_text(
+            json.dumps(
+                {
+                    "source_water": "groundwater",
+                    "water_quality": {"arsenic_ug_L": 150},
+                    "contaminants": ["arsenic"],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        result = self._run("assess-case", "--query-file", str(query))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["case_state"]["schema_version"], 1)
+        self.assertEqual(payload["case_state"]["query_id"], "arsenic-case")
+        self.assertEqual(payload["decision_readiness"]["status"], "needs_information")
+        actions = payload["decision_readiness"]["information_actions"]
+        self.assertEqual(actions[0]["field"], "water_quality.pH")
+        self.assertEqual(actions[0]["priority"], "high")
+        self.assertIn(
+            "water_quality.iron_mg_L",
+            {action["field"] for action in actions},
+        )
+        self.assertIn(
+            "not a calibrated probability",
+            payload["decision_readiness"]["interpretation"],
+        )
+
     def test_ingest_accepts_public_and_upstream_kb_type_spellings(self) -> None:
         record = self.root / "record.json"
         record.write_text(json.dumps({"case_id": "fixture/case", "value": 1}), encoding="utf-8")
@@ -95,6 +170,70 @@ class OpenAquaAdapterTests(unittest.TestCase):
                 self.assertTrue(staged.is_file())
                 self.assertEqual(json.loads(staged.read_text(encoding="utf-8"))["value"], 1)
                 self.assertEqual(json.loads(output.read_text(encoding="utf-8")), payload)
+
+    def test_audit_report_builds_claim_ledger_and_flags_structural_failures(self) -> None:
+        report = self.root / "report.json"
+        report.write_text(
+            json.dumps(
+                {
+                    "query_id": "case-1",
+                    "pipeline_version": "0.1.0",
+                    "recommendations": [
+                        {
+                            "chain_id": "chain-1",
+                            "chain": ["Oxidation", "Adsorption", "Chlorine"],
+                            "why_it_works": "Expected effluent is 10 ug/L.",
+                            "evidence": [
+                                {
+                                    "claim": "Adsorption is applicable.",
+                                    "support_type": "evidence_backed",
+                                    "source_id": "source-1",
+                                    "chunk_id": "chunk-1",
+                                    "text_excerpt": "Arsenic adsorption was evaluated.",
+                                }
+                            ],
+                            "assumptions": ["Arsenic speciation remains unresolved."],
+                            "constraint_report": {"overall_status": "PASS"},
+                            "uncertainty": "medium",
+                        },
+                        {
+                            "chain_id": "chain-2",
+                            "chain": ["Membrane Separation"],
+                            "why_it_works": "Removal is 99%.",
+                            "evidence": [
+                                {
+                                    "claim": "Unsupported claim",
+                                    "support_type": "evidence_backed",
+                                    "source_id": "",
+                                    "chunk_id": "",
+                                    "text_excerpt": "",
+                                }
+                            ],
+                            "assumptions": [],
+                            "constraint_report": {"overall_status": "FAIL"},
+                            "uncertainty": "insufficient_evidence",
+                        },
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        result = self._run("audit-report", "--report-file", str(report))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["kind"], "openaqua.claim-evidence-audit")
+        self.assertEqual(payload["status"], "fail")
+        self.assertEqual(payload["summary"]["recommendations"], 2)
+        self.assertEqual(payload["summary"]["support_types"]["evidence_backed"], 2)
+        self.assertGreaterEqual(payload["summary"]["critical_issues"], 2)
+        self.assertTrue(
+            any(claim["support_type"] == "assumption" for claim in payload["claim_ledger"])
+        )
+        second_issues = payload["recommendations"][1]["issues"]
+        self.assertTrue(any(issue["code"] == "AUDIT-006" for issue in second_issues))
+        self.assertTrue(any(issue["code"] == "AUDIT-008" for issue in second_issues))
 
     def test_treatment_evaluator_modules_with_dataclasses_load_correctly(self) -> None:
         self._write(
@@ -223,6 +362,21 @@ class OpenAquaAdapterTests(unittest.TestCase):
 
             class _Settings:
                 data_dir = Path(__file__).resolve().parents[2] / "data"
+                openrouter_api_key = ""
+                openrouter_base_url = "https://openrouter.ai/api/v1"
+                default_model = "fixture/default"
+                planner_model = "fixture/planner"
+                explanation_model = "fixture/explanation"
+                llm_temperature = 0.2
+                llm_max_tokens = 2048
+                top_k_retrieval = 10
+                top_k_rerank = 5
+                bm25_weight = 0.4
+                embedding_weight = 0.6
+                embedding_model = "fixture/embedding"
+                top_k_recommendations = 3
+                max_planning_candidates = 5
+                max_critic_iterations = 2
 
 
             _SETTINGS = _Settings()

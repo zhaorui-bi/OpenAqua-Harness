@@ -45,8 +45,9 @@ OpenAqua does not expose one unified CLI, so the Harness ships
 `backend/openaqua_cli.py`. It adds a stable JSON-oriented command contract:
 
 ```text
-health, catalog, normalize, recommend, retrieve, check-constraints,
-build-indexes, ingest, evaluate-trains, evaluate-retrieval
+health, identity, catalog, normalize, assess-case, recommend, retrieve,
+check-constraints, build-indexes, ingest, evaluate-trains, evaluate-retrieval,
+audit-report
 ```
 
 The adapter prepends `water_treatment_agent/` to `sys.path`, sets the working
@@ -71,6 +72,7 @@ Read-only/short operations run synchronously with bounded output and timeout:
 - status;
 - taxonomy catalog;
 - query normalization;
+- deterministic scientific case assessment;
 - candidate constraint checking.
 
 Longer or output-producing operations run as durable jobs:
@@ -80,7 +82,8 @@ Longer or output-producing operations run as durable jobs:
 - index building;
 - knowledge staging;
 - treatment-train evaluation;
-- retrieval evaluation.
+- retrieval evaluation;
+- structural claim–evidence report auditing.
 
 `src/openaqua/tools.ts` defines Zod schemas, maps camelCase MCP input to the
 adapter’s snake_case JSON, resolves workspace-relative paths, performs input
@@ -116,14 +119,17 @@ symbolic links.
 - requested JSON-safe parameters;
 - backend source/argv and adapter-reported version/revision;
 - regular-file metadata and SHA-256 hashes;
-- benchmark-directory identity without recursive hashing;
+- bounded recursive benchmark-directory fingerprints with file counts, byte totals, completeness state, and a deterministic tree SHA-256;
 - inline query/candidate payload hashes;
-- runtime identity and configured output;
-- canonical request fingerprint.
+- runtime identity, non-secret effective model/retrieval/planning settings, and explicit environment overrides;
+- configured output;
+- canonical request fingerprint;
+- a completion-time fingerprint of the configured output file or directory.
 
-The fingerprint does not include remote model responses, recursive dataset
-contents, or generated output. It is intentionally a request identity, not a
-claim of deterministic engineering equivalence.
+`requestSha256` remains a request identity and does not include remote model
+responses. The separately verified result fingerprint records generated output
+content, but neither fingerprint is a claim of deterministic engineering
+equivalence.
 
 ## Desktop topology and security
 

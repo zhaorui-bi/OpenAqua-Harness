@@ -79,11 +79,13 @@ jobs:
           const catalog = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
           const expected = JSON.parse(fs.readFileSync(process.argv[4], 'utf8')).version;
           assert.equal(version, expected);
-          assert.equal(catalog.tools.length, 16);
-          assert.equal(new Set(catalog.tools.map((tool) => tool.name)).size, 16);
+          assert.equal(catalog.tools.length, 18);
+          assert.equal(new Set(catalog.tools.map((tool) => tool.name)).size, 18);
           const logTool = catalog.tools.find((tool) => tool.name === 'openaqua_job_log');
           assert.ok(logTool.parameters.includes('cursor'));
           assert.ok(logTool.parameters.includes('view'));
+          assert.ok(catalog.tools.some((tool) => tool.name === 'openaqua_assess_case'));
+          assert.ok(catalog.tools.some((tool) => tool.name === 'openaqua_audit_report'));
           assert.ok(catalog.tools.some((tool) => tool.name === 'openaqua_job_list'));
           assert.ok(catalog.tools.some((tool) => tool.name === 'openaqua_job_artifacts'));
           assert.ok(catalog.tools.some((tool) => tool.name === 'openaqua_job_manifest'));

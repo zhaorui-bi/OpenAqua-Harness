@@ -50,7 +50,7 @@ browser, and desktop interfaces.
 | Capability | What it provides |
 | --- | --- |
 | **Five-agent workflow** | Query normalization, hybrid evidence retrieval, taxonomy-constrained planning, rule-based critique, and evidence-bound explanations. |
-| **Focused MCP surface** | 16 tools for readiness, taxonomy, recommendation, retrieval, constraint checking, indexing, knowledge staging, WContBench evaluation, and durable job control. |
+| **Focused MCP surface** | 18 tools for runtime readiness, scientific case assessment, recommendation auditing, taxonomy, recommendation, retrieval, constraint checking, indexing, knowledge staging, WContBench evaluation, and durable job control. |
 | **Three user interfaces** | Full terminal UI, lightweight CLI/REPL, local browser UI, and an Electron desktop shell backed by the same harness. |
 | **Durable engineering jobs** | Long operations survive session closure and expose lifecycle state, bounded logs, output metadata, input hashes, payload hashes, and request fingerprints. |
 | **Two model layers** | API-provider setup for the conversational agent, plus optional `OPENROUTER_API_KEY` support for OpenAqua’s parser/planner/explainer agents. |
@@ -239,6 +239,7 @@ Useful onboarding flags include `--openaqua-repo DIR`,
 | `openaqua_status` | Inspect Python, dependencies, OpenAqua revision, knowledge assets, indexes, and OpenRouter state. |
 | `openaqua_catalog` | Search canonical contaminants and treatment units. |
 | `openaqua_normalize_query` | Run parsing and taxonomy normalization only. |
+| `openaqua_assess_case` | Build a structured case state and prioritize critical missing information before recommendation. |
 | `openaqua_recommend` | Run Parser → Retriever → Planner → Critic → Explanation. |
 | `openaqua_retrieve_evidence` | Return normalized query plus unit/case retrieval evidence. |
 | `openaqua_check_constraints` | Apply taxonomy, disinfection, brine, and energy rules to candidate trains. |
@@ -246,6 +247,7 @@ Useful onboarding flags include `--openaqua-repo DIR`,
 | `openaqua_ingest_knowledge` | Stage a `kb_unit`/`kb_case` record and optionally rebuild. |
 | `openaqua_evaluate_trains` | Run WContBench treatment-train metrics. |
 | `openaqua_evaluate_retrieval` | Run WContBench retrieval metrics at requested k. |
+| `openaqua_audit_report` | Build a structural claim–evidence ledger and flag malformed support, failed constraints, and selected quantitative-claim risks. |
 | `openaqua_job_list` | Recover recent durable jobs. |
 | `openaqua_job_status` | Read lifecycle, timing, and output state. |
 | `openaqua_job_manifest` | Inspect engineering provenance and bounded output inventory. |
@@ -292,12 +294,14 @@ run outside the initiating MCP request. Each job receives a private directory:
 ```
 
 The engineering manifest records validated request parameters, the backend
-command and adapter-reported version/revision, runtime identity, regular-file
-SHA-256 hashes, inline JSON payload hashes, configured
-output, and a stable `requestSha256`. It intentionally describes the requested
-operation only. Preserve the OpenAqua commit, Hugging Face snapshot, generated
-indexes, model settings, and backend result JSON before claiming a reproducible
-comparison.
+command and adapter-reported version/revision, runtime identity, non-secret
+model/retrieval/planning settings, regular-file SHA-256 hashes, bounded recursive
+benchmark-directory fingerprints, inline JSON payload hashes, configured output,
+and a stable `requestSha256`. API keys are never recorded. When the job
+finishes, the same manifest records a separately verified fingerprint of the
+configured output file or directory. Preserve the OpenAqua commit, Hugging Face
+snapshot, generated indexes, model settings, and backend result JSON before
+claiming a reproducible comparison.
 
 ## Known boundaries
 

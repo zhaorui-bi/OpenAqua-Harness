@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import process from 'node:process';
 
 import { atomicWriteJson, atomicWriteText } from '../fs-utils';
+import { captureEngineeringRunOutput } from './provenance';
 
 interface JobRunnerConfig {
   readonly command: readonly string[];
@@ -10,6 +11,8 @@ interface JobRunnerConfig {
   readonly logPath: string;
   readonly exitCodePath: string;
   readonly completionPath?: string;
+  readonly engineeringManifestPath?: string;
+  readonly configuredOutput?: string;
   readonly startedAt?: string;
 }
 
@@ -40,6 +43,22 @@ const finish = (
   if (finished) process.exit(exitCode);
   finished = true;
   if (message !== undefined) writeSync(logDescriptor, `${message}\n`);
+  if (
+    config.engineeringManifestPath !== undefined &&
+    config.configuredOutput !== undefined
+  ) {
+    try {
+      captureEngineeringRunOutput(
+        config.engineeringManifestPath,
+        config.configuredOutput,
+      );
+    } catch (error) {
+      writeSync(
+        logDescriptor,
+        `could not capture configured output fingerprint: ${errorMessage(error)}\n`,
+      );
+    }
+  }
   closeSync(logDescriptor);
   if (config.completionPath !== undefined) {
     const finishedAt = new Date().toISOString();
@@ -103,12 +122,19 @@ function parseConfig(filePath: string): JobRunnerConfig {
   ) {
     throw new Error('command must be a non-empty string array');
   }
+  const engineeringManifestPath = optionalString(record, 'engineeringManifestPath');
+  const configuredOutput = optionalString(record, 'configuredOutput');
+  if ((engineeringManifestPath === undefined) !== (configuredOutput === undefined)) {
+    throw new Error('engineeringManifestPath and configuredOutput must be provided together');
+  }
   return {
     command: command as string[],
     workDir: requiredString(record, 'workDir'),
     logPath: requiredString(record, 'logPath'),
     exitCodePath: requiredString(record, 'exitCodePath'),
     completionPath: optionalString(record, 'completionPath'),
+    engineeringManifestPath,
+    configuredOutput,
     startedAt: optionalTimestamp(record, 'startedAt'),
   };
 }

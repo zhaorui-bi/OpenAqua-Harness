@@ -6,6 +6,19 @@ versioning.
 
 ## [Unreleased]
 
+### Added
+
+- A scientific case-readiness tool that returns a versioned case state,
+  critical blockers, and prioritized next-information actions.
+- A durable claim–evidence report audit with structural citation checks,
+  constraint and uncertainty checks, and a machine-readable claim ledger.
+
+### Changed
+
+- Engineering manifests now fingerprint benchmark directories and completed
+  outputs, record non-secret effective scientific settings, and retain schema-v1
+  read compatibility.
+
 ### Planned
 
 - Additional dataset acquisition and curation helpers.

@@ -15,7 +15,7 @@ readiness → query smoke → end-to-end smoke → bounded pilot → approved st
 | Stage | Purpose | Minimum evidence before advancing |
 | --- | --- | --- |
 | Readiness | Verify code, Python dependencies, processed knowledge, indexes, paths, and model configuration. | `openaqua_status` is interpretable; required data exist; indexes are non-empty. |
-| Query smoke | Verify units, taxonomy normalization, targets, and constraints. | A representative query normalizes as intended without silent unit changes. |
+| Query smoke | Verify units, taxonomy normalization, targets, constraints, and case-state readiness. | A representative query normalizes as intended without silent unit changes; `openaqua_assess_case` exposes unresolved critical or high-priority information needs. |
 | End-to-end smoke | Exercise retrieval, planning, critique, explanation, and output persistence. | One case produces a readable result with evidence, assumptions, uncertainty, and a durable manifest. |
 | Pilot | Estimate completion rate, latency, schema failures, evidence coverage, and model variability. | Recurring failures are diagnosed and the proposed study budget is justified. |
 | Approved study | Run the frozen comparison or WContBench subset in bounded batches. | Each branch has stable identity, complete denominators, and recoverable outputs. |
@@ -40,7 +40,10 @@ Do not silently infer:
 - applicable regulatory standards.
 
 Natural-language parsing can fill gaps when OpenRouter is configured, but those
-fields remain model-extracted assumptions until reviewed.
+fields remain model-extracted assumptions until reviewed. `openaqua_assess_case`
+provides a deterministic screening checklist for missing information; its
+readiness status is not a calibrated probability of success, safety, or
+compliance.
 
 ## Evidence and recommendation contract
 
@@ -59,6 +62,9 @@ reject the chain. A high rank score is not a probability of success.
 Reports should preserve ordered unit operations, decomposed scores, citations,
 constraint revisions, dropped alternatives, assumptions, risks, and
 uncertainty. Unsupported quantitative performance claims must be omitted.
+`openaqua_audit_report` can enforce this contract structurally and produce a
+claim–evidence ledger, but its checks do not establish semantic entailment or
+source quality.
 
 ## Machine-readable run provenance
 
@@ -69,21 +75,25 @@ preserves:
 - requested parameters (excluding wait controls);
 - backend source, command, and adapter-reported version/revision when available;
 - Harness/Node/platform identity;
+- adapter-reported model, retrieval, and planning settings plus explicit non-secret environment overrides;
 - regular-file input paths, sizes, timestamps, and SHA-256 hashes;
 - inline query/candidate JSON byte counts and SHA-256 hashes;
 - configured output path;
-- stable request fingerprint.
+- stable request fingerprint;
+- completion-time output content fingerprint and completeness state.
 
 Inspect it with `openaqua_job_manifest`.
 
-This is **request-level provenance**. It does not recursively hash benchmark
-directories and cannot freeze remote model behavior. A reproducible study must
-also preserve:
+The request and result identities are separate. Schema version 2 recursively
+fingerprints benchmark inputs and configured outputs within explicit entry and
+byte limits, reports whether each tree hash is complete, and never follows
+symbolic links. It still cannot freeze remote model behavior or replace an
+immutable dataset release. A reproducible study must also preserve:
 
 - OpenAqua Git commit/release;
 - Hugging Face dataset revision or an external checksum inventory;
 - processed knowledge files and generated indexes;
-- OpenRouter model identifiers and relevant settings;
+- OpenRouter provider-side model revision or behavior changes that cannot be frozen by a local identifier;
 - prediction/result JSON;
 - evaluator code revision;
 - any manual curation applied to staged knowledge.

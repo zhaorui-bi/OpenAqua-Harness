@@ -28,11 +28,15 @@ const client = new Client({ name: 'openaqua-mcp-smoke', version: '1.0.0' });
 try {
   await client.connect(transport);
   const catalog = await client.listTools();
-  assert(catalog.tools.length === 16, `expected 16 tools, found ${String(catalog.tools.length)}`);
+  assert(catalog.tools.length === 18, `expected 18 tools, found ${String(catalog.tools.length)}`);
   assert(
     new Set(catalog.tools.map((tool) => tool.name)).size === catalog.tools.length,
     'tool names are not unique',
   );
+  const assess = catalog.tools.find((tool) => tool.name === 'openaqua_assess_case');
+  assert(assess?.annotations?.readOnlyHint === true, 'case assessment lacks read-only annotation');
+  const audit = catalog.tools.find((tool) => tool.name === 'openaqua_audit_report');
+  assert(audit?.annotations?.idempotentHint === true, 'report audit lacks idempotent annotation');
   const cancel = catalog.tools.find((tool) => tool.name === 'openaqua_job_cancel');
   assert(cancel?.annotations?.destructiveHint === true, 'cancel tool lacks destructive annotation');
   const manifest = catalog.tools.find((tool) => tool.name === 'openaqua_job_manifest');
@@ -44,7 +48,7 @@ try {
 
   const status = await client.callTool({ name: 'openaqua_status', arguments: {} });
   assert(status.content.some((item) => item.type === 'text'), 'status tool returned no text content');
-  process.stdout.write('MCP smoke: 16 tools, annotations, dispatch, and empty job recovery verified\n');
+  process.stdout.write('MCP smoke: 18 tools, annotations, dispatch, and empty job recovery verified\n');
 } finally {
   await client.close().catch(() => undefined);
   rmSync(scratch, { recursive: true, force: true });

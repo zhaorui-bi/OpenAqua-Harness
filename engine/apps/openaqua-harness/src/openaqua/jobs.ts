@@ -151,16 +151,19 @@ export function startJob(
   const runnerConfigPath = path.join(dir, 'runner.json');
   const workDir = path.resolve(options.workDir);
   const startedAt = new Date().toISOString();
+  const configuredOutputPath = configuredOutput(command, workDir);
+  const engineeringManifestPath =
+    options.provenance === undefined ? undefined : path.join(dir, ENGINEERING_RUN_MANIFEST);
   try {
-    if (options.provenance !== undefined) {
+    if (options.provenance !== undefined && engineeringManifestPath !== undefined) {
       atomicWriteJson(
-        path.join(dir, ENGINEERING_RUN_MANIFEST),
+        engineeringManifestPath,
         buildEngineeringRunManifest({
           jobId: id,
           createdAt: startedAt,
           command,
           workDir,
-          configuredOutput: configuredOutput(command, workDir),
+          configuredOutput: configuredOutputPath,
           request: options.provenance,
         }),
       );
@@ -171,6 +174,9 @@ export function startJob(
       logPath,
       exitCodePath,
       completionPath,
+      engineeringManifestPath,
+      configuredOutput:
+        engineeringManifestPath === undefined ? undefined : configuredOutputPath,
       startedAt,
     });
   } catch (error) {

@@ -65,12 +65,14 @@ const READ_ONLY_IDEMPOTENT = new Set([
 ]);
 const READ_ONLY_OPEN_WORLD = new Set([
   'openaqua_normalize_query',
+  'openaqua_assess_case',
   'openaqua_check_constraints',
 ]);
 const IDEMPOTENT_WRITES = new Set([
   'openaqua_build_indexes',
   'openaqua_evaluate_trains',
   'openaqua_evaluate_retrieval',
+  'openaqua_audit_report',
 ]);
 
 export function openAquaToolAnnotations(name: string): OpenAquaToolAnnotations {
@@ -285,13 +287,24 @@ async function launchJob(
   if (isToolResult(backend)) return backend;
   const workDir = jobWorkDir(ctx);
   const command = [...backend.command, ...argv];
-  const versionProbe = await runBackend(backend, ['--version'], {
-    timeoutMs: 30_000,
-    cwd: workDir,
-    env: ctx.env,
-  });
+  const [versionProbe, identityProbe] = await Promise.all([
+    runBackend(backend, ['--version'], {
+      timeoutMs: 30_000,
+      cwd: workDir,
+      env: ctx.env,
+    }),
+    runBackend(backend, ['identity'], {
+      timeoutMs: 30_000,
+      cwd: workDir,
+      env: ctx.env,
+    }),
+  ]);
   const backendVersion =
     versionProbe.code === 0 ? firstOutputLine(versionProbe.stdout, 1_000) : undefined;
+  const scientificConfiguration = scientificConfigurationForRun(
+    identityProbe.code === 0 ? parseJson(identityProbe.stdout) : undefined,
+    ctx.env,
+  );
   let provenance: ReturnType<typeof createEngineeringJobRequest>;
   try {
     provenance = createEngineeringJobRequest({
@@ -301,6 +314,7 @@ async function launchJob(
       backendVersion,
       args,
       workDir,
+      scientificConfiguration,
     });
   } catch (error) {
     return fail('Could not record the engineering request.', {
@@ -457,6 +471,19 @@ export const OPENAQUA_TOOLS: readonly OpenAquaTool[] = [
       const query = queryArguments(args, workDir);
       if (query.error !== undefined) return query.error;
       return immediateBackendCall(ctx, ['normalize', ...query.argv], 180_000);
+    },
+  },
+  {
+    name: 'openaqua_assess_case',
+    title: 'Assess water-treatment case readiness',
+    description:
+      'Normalize a case into a machine-readable scientific state, identify critical blockers and decision-sensitive missing information, and return a prioritized next-information checklist. The readiness classification is deterministic screening, not a calibrated probability of treatment success or compliance.',
+    inputSchema: { ...QUERY_SHAPE },
+    async run(args, ctx) {
+      const workDir = jobWorkDir(ctx);
+      const query = queryArguments(args, workDir);
+      if (query.error !== undefined) return query.error;
+      return immediateBackendCall(ctx, ['assess-case', ...query.argv], 180_000);
     },
   },
   {
@@ -664,6 +691,29 @@ export const OPENAQUA_TOOLS: readonly OpenAquaTool[] = [
     },
   },
   {
+    name: 'openaqua_audit_report',
+    title: 'Audit an OpenAqua recommendation report',
+    description:
+      `Build a machine-readable claim-evidence ledger and structurally audit evidence citations, declared support types, constraint status, uncertainty, and selected quantitative-claim signals. This does not establish semantic entailment, source quality, treatment performance, safety, or compliance. ${PATH_NOTE}`,
+    inputSchema: {
+      reportFile: nonEmptyPath.describe('OpenAqua FinalReport JSON file to audit.'),
+      output: nonEmptyPath.optional().describe('Audit JSON path. A timestamped workspace path is used by default.'),
+      ...waitShape,
+    },
+    async run(args, ctx) {
+      const workDir = jobWorkDir(ctx);
+      const reportFile = resolveJobPath(String(args['reportFile']), workDir);
+      const output = outputPath(args, workDir, 'claim-evidence-audit');
+      return launchJob(
+        ctx,
+        ['audit-report', '--report-file', reportFile, '--output', output],
+        'openaqua_audit_report',
+        'audit-report',
+        { ...args, reportFile, output },
+      );
+    },
+  },
+  {
     name: 'openaqua_job_list',
     title: 'List OpenAqua jobs',
     description: 'Recover recent durable OpenAqua jobs after a CLI, Web, or desktop session closes.',
@@ -699,7 +749,7 @@ export const OPENAQUA_TOOLS: readonly OpenAquaTool[] = [
     name: 'openaqua_job_manifest',
     title: 'Inspect OpenAqua run manifest',
     description:
-      'Read request-level provenance: validated parameters, backend/runtime identity, file hashes, inline payload hashes, lifecycle state, and a bounded output inventory. A matching request fingerprint does not prove identical datasets, model responses, or engineering outcomes.',
+      'Read validated parameters, backend/runtime identity, non-secret scientific model settings, input and payload fingerprints, lifecycle state, a completion-time configured-output fingerprint, and a bounded artifact inventory. Request and result identities are verified separately; neither freezes remote model behavior.',
     inputSchema: {
       jobId: jobIdSchema,
       maxEntries: z.number().int().min(1).max(1_000).optional(),
@@ -727,7 +777,7 @@ export const OPENAQUA_TOOLS: readonly OpenAquaTool[] = [
         note:
           provenance?.manifest === undefined
             ? 'No run manifest is available for this legacy or non-engineering job.'
-            : 'requestSha256 identifies the requested operation. Preserve the OpenAqua revision, Hugging Face dataset snapshot, indexes, model settings, and result JSON for a reproducible comparison.',
+            : 'requestSha256 identifies the requested operation; result.resultSha256 identifies the captured configured output when present. Preserve the OpenAqua revision, dataset/index snapshot, model settings, and result files for a reproducible comparison.',
       });
     },
   },
@@ -818,6 +868,109 @@ export const OPENAQUA_TOOLS: readonly OpenAquaTool[] = [
     },
   },
 ];
+
+const SCIENTIFIC_ENVIRONMENT_KEYS = [
+  'OPENAQUA_OPENROUTER_MODEL',
+  'OPENAQUA_DEFAULT_MODEL',
+  'OPENAQUA_PLANNER_MODEL',
+  'OPENAQUA_EXPLANATION_MODEL',
+  'DEFAULT_MODEL',
+  'PLANNER_MODEL',
+  'EXPLANATION_MODEL',
+  'LLM_TEMPERATURE',
+  'LLM_MAX_TOKENS',
+  'TOP_K_RETRIEVAL',
+  'TOP_K_RERANK',
+  'BM25_WEIGHT',
+  'EMBEDDING_WEIGHT',
+  'EMBEDDING_MODEL',
+  'TOP_K_RECOMMENDATIONS',
+  'MAX_PLANNING_CANDIDATES',
+  'MAX_CRITIC_ITERATIONS',
+] as const;
+
+function scientificConfigurationForRun(
+  adapterIdentity: unknown,
+  env: NodeJS.ProcessEnv,
+): Record<string, unknown> | undefined {
+  const configuration: Record<string, unknown> = {};
+  if (isRecord(adapterIdentity)) {
+    const adapterReported: Record<string, unknown> = {};
+    copyConfigurationValues(adapterIdentity, adapterReported, [
+      'adapter_version',
+      'backend_revision',
+      'python',
+    ]);
+    for (const [section, keys] of [
+      [
+        'models',
+        [
+          'openrouter_configured',
+          'default_model',
+          'planner_model',
+          'explanation_model',
+          'llm_temperature',
+          'llm_max_tokens',
+        ],
+      ],
+      [
+        'retrieval',
+        [
+          'top_k_retrieval',
+          'top_k_rerank',
+          'bm25_weight',
+          'embedding_weight',
+          'embedding_model',
+        ],
+      ],
+      [
+        'planning',
+        [
+          'top_k_recommendations',
+          'max_planning_candidates',
+          'max_critic_iterations',
+        ],
+      ],
+    ] as const) {
+      const source = adapterIdentity[section];
+      if (!isRecord(source)) continue;
+      const selected: Record<string, unknown> = {};
+      copyConfigurationValues(source, selected, keys);
+      if (Object.keys(selected).length > 0) adapterReported[section] = selected;
+    }
+    if (Object.keys(adapterReported).length > 0) {
+      configuration['adapterReported'] = adapterReported;
+    }
+  }
+
+  const environmentOverrides: Record<string, string> = {};
+  for (const key of SCIENTIFIC_ENVIRONMENT_KEYS) {
+    const value = env[key]?.trim();
+    if (value !== undefined && value !== '') environmentOverrides[key] = value;
+  }
+  if (Object.keys(environmentOverrides).length > 0) {
+    configuration['environmentOverrides'] = environmentOverrides;
+  }
+  return Object.keys(configuration).length > 0 ? configuration : undefined;
+}
+
+function copyConfigurationValues(
+  source: Record<string, unknown>,
+  target: Record<string, unknown>,
+  keys: readonly string[],
+): void {
+  for (const key of keys) {
+    const value = source[key];
+    if (
+      value === null ||
+      typeof value === 'string' ||
+      typeof value === 'boolean' ||
+      (typeof value === 'number' && Number.isFinite(value))
+    ) {
+      target[key] = value;
+    }
+  }
+}
 
 function commandReport(result: RunResult): Record<string, unknown> {
   const parsed = parseJson(result.stdout);
