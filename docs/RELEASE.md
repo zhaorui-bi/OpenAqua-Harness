@@ -36,6 +36,11 @@ npm run setup
 npm run release:check
 ```
 
+The repository keeps its primary MIT license in the root `LICENSE`; upstream
+copyright notices, third-party notices, and the SBOM are stored under
+`licenses/`. Packaged resources and downloaded release assets retain their
+existing names.
+
 Regenerate notices whenever a dependency changes:
 
 ```bash

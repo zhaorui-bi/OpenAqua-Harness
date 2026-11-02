@@ -237,7 +237,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ needs.verify.outputs.tag }}
         run: |
-          cp SBOM.spdx.json THIRD_PARTY_NOTICES.md release-assets/
+          cp licenses/SBOM.spdx.json licenses/THIRD_PARTY_NOTICES.md release-assets/
           node scripts/generate-checksums.mjs release-assets
           node - "$RELEASE_TAG" <<'NODE' > release-assets/RELEASE_NOTES.md
           const fs = require('node:fs');

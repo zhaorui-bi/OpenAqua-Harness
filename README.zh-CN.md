@@ -267,7 +267,10 @@ OpenAqua 论文以及实际使用的软件、数据和模型版本：
 > retrieval augmentation and critic-based refinement. *Water Research* (2026).
 > <https://doi.org/10.1016/j.watres.2026.126761>
 
-详见 [CITATION.cff](./CITATION.cff)、[THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)
-与 [SBOM.spdx.json](./SBOM.spdx.json)。
+根目录的 [LICENSE](./LICENSE) 是 OpenAqua Harness 的 MIT 主许可证。
+上游版权声明和依赖清单集中保存在 [licenses/](./licenses/)。
+详见 [CITATION.cff](./CITATION.cff)、
+[THIRD_PARTY_NOTICES.md](./licenses/THIRD_PARTY_NOTICES.md) 与
+[SBOM.spdx.json](./licenses/SBOM.spdx.json)。
 
 OpenAqua Harness 是独立产品，不得表述为 OpenAqua 或 Kimi Code 官方客户端。

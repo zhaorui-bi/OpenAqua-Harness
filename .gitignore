@@ -23,6 +23,7 @@ dist/
 /.tmp/
 /.cache/
 coverage/
+/build/icon.iconset/
 *.log
 __pycache__/
 *.py[cod]

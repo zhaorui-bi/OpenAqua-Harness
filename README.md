@@ -361,8 +361,11 @@ cite the OpenAqua paper and the exact software/data versions used:
 > retrieval augmentation and critic-based refinement. *Water Research* (2026).
 > <https://doi.org/10.1016/j.watres.2026.126761>
 
-See [CITATION.cff](./CITATION.cff), [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md),
-and [SBOM.spdx.json](./SBOM.spdx.json).
+The root [LICENSE](./LICENSE) is the OpenAqua Harness MIT license. Upstream
+copyright notices and dependency records are kept in [licenses/](./licenses/).
+See [CITATION.cff](./CITATION.cff),
+[THIRD_PARTY_NOTICES.md](./licenses/THIRD_PARTY_NOTICES.md), and
+[SBOM.spdx.json](./licenses/SBOM.spdx.json).
 
 OpenAqua Harness is an independent product and must not be represented as the
 official OpenAqua or Kimi Code client.

@@ -2,12 +2,12 @@
 
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outputPath = path.join(root, 'SBOM.spdx.json');
+const outputPath = path.join(root, 'licenses', 'SBOM.spdx.json');
 const checkOnly = process.argv.includes('--check');
 const rootPackage = readJson(path.join(root, 'package.json'));
 const pnpmManifest = readJson(path.join(root, 'node_modules', 'pnpm', 'package.json'));
@@ -46,7 +46,7 @@ try {
   fail(`pnpm returned invalid SPDX JSON: ${String(error)}`);
 }
 canonicalizePnpmIds(sbom);
-applyNoticeLicenses(sbom, path.join(root, 'THIRD_PARTY_NOTICES.md'));
+applyNoticeLicenses(sbom, path.join(root, 'licenses', 'THIRD_PARTY_NOTICES.md'));
 
 const releaseDate = /^date-released:\s*["']?([^"'\s]+)["']?$/m.exec(
   readFileSync(path.join(root, 'CITATION.cff'), 'utf8'),
@@ -147,6 +147,7 @@ if (checkOnly) {
   }
   process.stdout.write(`SPDX SBOM: current (${String(sbom.packages.length)} packages)\n`);
 } else {
+  mkdirSync(path.dirname(outputPath), { recursive: true });
   writeFileSync(outputPath, content, 'utf8');
   process.stdout.write(
     `SPDX SBOM: wrote ${path.relative(root, outputPath)} (${String(sbom.packages.length)} packages)\n`,

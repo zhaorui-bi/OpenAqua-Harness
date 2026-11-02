@@ -109,15 +109,15 @@
         "to": "licenses/KIMI_CODE_LICENSE"
       },
       {
-        "from": "OPENAQUA_UPSTREAM_LICENSE",
+        "from": "licenses/OpenAqua-MIT.txt",
         "to": "licenses/OPENAQUA_UPSTREAM_LICENSE"
       },
       {
-        "from": "THIRD_PARTY_NOTICES.md",
+        "from": "licenses/THIRD_PARTY_NOTICES.md",
         "to": "licenses/THIRD_PARTY_NOTICES.md"
       },
       {
-        "from": "SBOM.spdx.json",
+        "from": "licenses/SBOM.spdx.json",
         "to": "licenses/SBOM.spdx.json"
       },
       {

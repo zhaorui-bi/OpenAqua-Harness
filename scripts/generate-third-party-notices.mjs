@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import {
   existsSync,
+  mkdirSync,
   readFileSync,
   readdirSync,
   statSync,
@@ -13,7 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outputPath = path.join(root, 'THIRD_PARTY_NOTICES.md');
+const outputPath = path.join(root, 'licenses', 'THIRD_PARTY_NOTICES.md');
 const checkOnly = process.argv.includes('--check');
 const pnpmCli = path.join(root, 'node_modules', 'pnpm', 'bin', 'pnpm.mjs');
 const packages = new Map();
@@ -92,7 +93,7 @@ mergePackage({
   license: 'MIT',
   author: 'ElijahMoulton and OpenAqua contributors',
   homepage: 'https://github.com/zhaorui-bi/OpenAqua',
-  notices: [readNotice(path.join(root, 'OPENAQUA_UPSTREAM_LICENSE'))],
+  notices: [readNotice(path.join(root, 'licenses', 'OpenAqua-MIT.txt'))],
 });
 
 const content = renderNotices([...packages.values()]);
@@ -107,6 +108,7 @@ if (checkOnly) {
     `third-party notices: current (${String(packages.size)} packages)\n`,
   );
 } else {
+  mkdirSync(path.dirname(outputPath), { recursive: true });
   writeFileSync(outputPath, content, 'utf8');
   process.stdout.write(
     `third-party notices: wrote ${path.relative(root, outputPath)} (${String(packages.size)} packages)\n`,

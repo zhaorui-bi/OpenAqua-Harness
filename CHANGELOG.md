@@ -6,6 +6,13 @@ versioning.
 
 ## [Unreleased]
 
+### Repository maintenance
+
+- Keep one project license at the repository root and collect upstream notices
+  and release compliance files under `licenses/`.
+- Remove duplicate brand assets, generated icon intermediates, and unused
+  upstream GitHub automation, pending changelog entries, and promotional media.
+
 ### Planned
 
 - Additional dataset acquisition and curation helpers.

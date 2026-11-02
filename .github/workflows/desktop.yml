@@ -16,8 +16,9 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'scripts/**'
-      - 'SBOM.spdx.json'
-      - 'THIRD_PARTY_NOTICES.md'
+      - 'LICENSE'
+      - 'engine/LICENSE'
+      - 'licenses/**'
   pull_request:
     paths:
       - '.github/workflows/desktop.yml'
@@ -32,8 +33,9 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - 'scripts/**'
-      - 'SBOM.spdx.json'
-      - 'THIRD_PARTY_NOTICES.md'
+      - 'LICENSE'
+      - 'engine/LICENSE'
+      - 'licenses/**'
   workflow_dispatch:
 
 permissions:
@@ -105,5 +107,5 @@ jobs:
           path: |
             dist/OpenAqua-Harness-*
             dist/SHA256SUMS
-            SBOM.spdx.json
-            THIRD_PARTY_NOTICES.md
+            licenses/SBOM.spdx.json
+            licenses/THIRD_PARTY_NOTICES.md
