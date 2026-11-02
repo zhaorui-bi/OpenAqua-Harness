@@ -20,7 +20,7 @@
   "packageManager": "npm@12.0.2",
   "scripts": {
     "start": "electron .",
-    "postinstall": "node node_modules/electron/install.js",
+    "postinstall": "node node_modules/electron/install.js && node scripts/patch-packaging-dependencies.mjs",
     "cli": "node engine/apps/openaqua-harness/dist/cli.mjs",
     "setup": "pnpm -C engine install --frozen-lockfile && npm run build",
     "sync:web": "node engine/apps/openaqua-harness/scripts/sync-web-ui.mjs",
@@ -28,7 +28,7 @@
     "build:engine": "pnpm -C engine --filter openaqua-harness build",
     "build:tui": "pnpm -C engine --filter @moonshot-ai/kimi-code build",
     "lint": "npm run lint:desktop && npm run lint:workers && pnpm -C engine exec oxlint apps/openaqua-harness/src apps/openaqua-harness/test apps/openaqua-harness/scripts --type-aware",
-    "lint:desktop": "engine/node_modules/.bin/oxlint main.js scripts/audit-runtime.mjs scripts/check-adapter.mjs scripts/check-repository.mjs scripts/check-tui.mjs scripts/generate-checksums.mjs scripts/generate-sbom.mjs scripts/generate-third-party-notices.mjs scripts/smoke-desktop.mjs --deny-warnings",
+    "lint:desktop": "engine/node_modules/.bin/oxlint main.js scripts/audit-runtime.mjs scripts/check-adapter.mjs scripts/check-repository.mjs scripts/check-tui.mjs scripts/generate-checksums.mjs scripts/generate-sbom.mjs scripts/generate-third-party-notices.mjs scripts/smoke-desktop.mjs scripts/check-packaging.mjs scripts/patch-packaging-dependencies.mjs --deny-warnings",
     "lint:workers": "pnpm -C engine exec oxlint packages/kap-server/src/search/worker/host.ts packages/minidb/src/worker/text-build.ts --type-aware --deny-warnings",
     "audit:runtime": "node scripts/audit-runtime.mjs",
     "licenses": "node scripts/generate-third-party-notices.mjs && node scripts/generate-sbom.mjs",
@@ -40,11 +40,12 @@
     "test": "pnpm -C engine --filter openaqua-harness test:coverage",
     "test:adapter": "node scripts/check-adapter.mjs",
     "test:desktop-startup": "node scripts/smoke-desktop.mjs --check-startup",
+    "test:packaging": "node scripts/check-packaging.mjs",
     "check:tui": "node scripts/check-tui.mjs",
     "smoke:mcp": "npm run build:engine && node engine/apps/openaqua-harness/scripts/smoke-mcp.mjs",
     "smoke:web": "node engine/apps/openaqua-harness/scripts/smoke-web.mjs",
     "smoke:desktop": "node scripts/smoke-desktop.mjs",
-    "check": "node --check main.js && node --check scripts/audit-runtime.mjs && node --check scripts/check-adapter.mjs && node --check scripts/check-repository.mjs && node --check scripts/check-tui.mjs && node --check scripts/generate-checksums.mjs && node --check scripts/generate-sbom.mjs && node --check scripts/generate-third-party-notices.mjs && node --check scripts/smoke-desktop.mjs && node --check engine/apps/openaqua-harness/scripts/smoke-web.mjs && npm run lint && npm run typecheck && npm test && npm run test:adapter && npm run test:desktop-startup && npm run check:tui && npm run smoke:mcp && npm run smoke:web && npm run check:licenses && npm run check:repo",
+    "check": "node --check main.js && node --check scripts/check-packaging.mjs && node --check scripts/patch-packaging-dependencies.mjs && node --check scripts/audit-runtime.mjs && node --check scripts/check-adapter.mjs && node --check scripts/check-repository.mjs && node --check scripts/check-tui.mjs && node --check scripts/generate-checksums.mjs && node --check scripts/generate-sbom.mjs && node --check scripts/generate-third-party-notices.mjs && node --check scripts/smoke-desktop.mjs && node --check engine/apps/openaqua-harness/scripts/smoke-web.mjs && npm run lint && npm run typecheck && npm test && npm run test:adapter && npm run test:desktop-startup && npm run test:packaging && npm run check:tui && npm run smoke:mcp && npm run smoke:web && npm run check:licenses && npm run check:repo",
     "release:check": "npm run check && npm audit --audit-level=low && npm run audit:runtime",
     "clean:dist": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "prepack": "npm run clean:dist && npm run build:engine",
@@ -154,7 +155,17 @@
     }
   },
   "overrides": {
-    "@electron/get": "5.1.0"
+    "@electron/get": "5.1.0",
+    "@electron/asar": {
+      ".": "4.3.1",
+      "glob": "14.0.3"
+    },
+    "@electron/universal": "3.0.6",
+    "minimatch": "11.0.2",
+    "rimraf": {
+      ".": "6.1.3",
+      "glob": "14.0.3"
+    }
   },
   "allowScripts": {
     "electron-winstaller@5.4.0": true,

@@ -58,6 +58,13 @@ jobs:
             packages/kap-server/test/search/searchRoute.test.ts
           ./node_modules/.bin/pnpm -C engine/packages/minidb exec vitest run test/worker-build.test.ts
 
+      - name: Test image codecs and HTTP adapter compatibility
+        run: |
+          ./node_modules/.bin/pnpm -C engine exec vitest run \
+            packages/agent-core-v2/test/agent/media/image-compress.test.ts \
+            apps/kimi-code/test/tui/controllers/editor-keyboard-image-paste.test.ts \
+            apps/vis/server/test/lib/start.test.ts
+
       - name: Smoke-test the built harness outside the source tree
         shell: bash
         run: |

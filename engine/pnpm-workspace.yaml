@@ -24,6 +24,24 @@ catalog:
   zod: 4.6.7
 
 overrides:
+  # Jimp 1.6.1 uses public schema APIs retained by Zod 4; scope this migration
+  # to the inspected Jimp release rather than overriding other Zod 3 users.
+  "@jimp/plugin-blit@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-circle@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-color@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-contain@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-cover@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-crop@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-displace@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-fisheye@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-flip@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-mask@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-print@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-quantize@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-resize@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-rotate@1.6.1>zod": "4.6.7"
+  "@jimp/plugin-threshold@1.6.1>zod": "4.6.7"
+  "@jimp/types@1.6.1>zod": "4.6.7"
   "body-parser@2.3.0": "2.4.0"
   "fast-uri@3.1.8": "3.1.9"
   "fast-uri@4.2.2": "4.2.3"

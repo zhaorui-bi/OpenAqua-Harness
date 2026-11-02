@@ -106,7 +106,6 @@ font assets. An entry in this inventory does not imply endorsement by its author
 | @fontsource-variable/inter | 5.2.8 | OFL-1.1 | Google Inc. | https://fontsource.org/fonts/inter |
 | @fontsource-variable/noto-serif-sc | 5.3.1 | OFL-1.1 | Google Inc. | https://fontsource.org/fonts/noto-serif-sc |
 | @google/genai | 1.52.0 | Apache-2.0 |  | https://github.com/googleapis/js-genai#readme |
-| @hono/node-server | 1.19.17 | MIT | Yusuke Wada <yusuke@kamawada.com> (https://github.com/yusukebe) | https://github.com/honojs/node-server |
 | @hono/node-server | 2.1.3 | MIT | Yusuke Wada <yusuke@kamawada.com> (https://github.com/yusukebe) | https://github.com/honojs/node-server |
 | @iconify-json/simple-icons | 1.2.84 | CC0-1.0 |  | https://icon-sets.iconify.design/simple-icons/ |
 | @iconify/types | 2.0.0 | MIT | Vjacheslav Trushkin | https://github.com/iconify/iconify |
@@ -2393,7 +2392,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 </details>
 
-<details><summary>@hono/node-server@1.19.17, @hono/node-server@2.1.3 — 35d16fc259cf</summary>
+<details><summary>@hono/node-server@2.1.3 — 35d16fc259cf</summary>
 
 <pre>
 MIT License

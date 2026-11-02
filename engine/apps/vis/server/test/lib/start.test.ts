@@ -39,4 +39,29 @@ describe('startVisServer', () => {
       startVisServer({ port: taken, homeDir: '/tmp/does-not-exist-home' }),
     ).rejects.toThrow();
   });
+
+  it('preserves bearer authentication through the real HTTP adapter', async () => {
+    const token = 'vis-test-token';
+    const server = await startVisServer({
+      host: '127.0.0.1',
+      port: 0,
+      homeDir: '/tmp/does-not-exist-home',
+      authToken: token,
+    });
+    stop = server.close;
+
+    const unauthenticated = await fetch(`${server.url}api/sessions`);
+    expect(unauthenticated.status).toBe(401);
+    expect(unauthenticated.headers.get('www-authenticate')).toBe('Bearer realm="kimi-vis"');
+
+    const wrongToken = await fetch(`${server.url}api/sessions`, {
+      headers: { authorization: 'Bearer wrong-test-token' },
+    });
+    expect(wrongToken.status).toBe(401);
+
+    const authenticated = await fetch(`${server.url}api/sessions`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(authenticated.status).toBe(200);
+  });
 });

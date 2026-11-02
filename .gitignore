@@ -6,6 +6,9 @@ dist/
 .env.*
 *.pem
 *.key
+*.p8
+*.p12
+*.pfx
 
 # Local runtime data may contain API keys, credentials, sessions and logs.
 /.openaqua/

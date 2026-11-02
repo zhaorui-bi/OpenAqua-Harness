@@ -46,6 +46,9 @@ versioning.
 
 - Update compatible HTTP, URI, schema-validation, and desktop-packaging
   dependencies while retaining dependency audits as public-release gates.
+- Update image-processing schema validation and the visualization HTTP adapter,
+  and replace legacy desktop archive and file-matching dependencies; add
+  installation, image, HTTP, and packaging compatibility checks.
 
 ### Compatibility and scope
 

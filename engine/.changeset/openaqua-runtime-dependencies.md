@@ -2,4 +2,4 @@
 "openaqua-harness": patch
 ---
 
-Update compatible HTTP, URI, and schema-validation dependencies.
+Update HTTP, URI, image-processing, and desktop-packaging dependencies.

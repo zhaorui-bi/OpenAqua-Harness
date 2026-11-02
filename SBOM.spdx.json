@@ -2717,29 +2717,6 @@
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package--hono-node-server-1.19.17-495062ffb54ba0be",
-      "name": "@hono/node-server",
-      "versionInfo": "1.19.17",
-      "downloadLocation": "https://registry.npmjs.org/@hono/node-server/-/node-server-1.19.17.tgz",
-      "filesAnalyzed": false,
-      "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "MIT",
-      "copyrightText": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceType": "purl",
-          "referenceLocator": "pkg:npm/%40hono/node-server@1.19.17"
-        }
-      ],
-      "checksums": [
-        {
-          "algorithm": "SHA512",
-          "checksumValue": "7529de4b9aa189ab995860c278ae28ebde5777d9d4363be249908c42b8f5d1e7adafc5259f5b9c9fa6dba6138ce94ca700c32d348cd9352a4bf6f9c0489c2b3d"
-        }
-      ]
-    },
-    {
       "SPDXID": "SPDXRef-Package--hono-node-server-2.1.3-3cabf8f7607c0754",
       "name": "@hono/node-server",
       "versionInfo": "2.1.3",
@@ -27139,11 +27116,6 @@
       "spdxElementId": "SPDXRef-OpenAqua-Harness",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package--google-genai-1.52.0-93c05444149b8786"
-    },
-    {
-      "spdxElementId": "SPDXRef-OpenAqua-Harness",
-      "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package--hono-node-server-1.19.17-495062ffb54ba0be"
     },
     {
       "spdxElementId": "SPDXRef-OpenAqua-Harness",
