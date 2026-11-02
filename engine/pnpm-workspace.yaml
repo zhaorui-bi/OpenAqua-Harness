@@ -21,9 +21,14 @@ allowBuilds:
   tree-sitter-bash: true
 
 catalog:
-  zod: 4.3.6
+  zod: 4.6.7
 
 overrides:
+  "body-parser@2.3.0": "2.4.0"
+  "fast-uri@3.1.8": "3.1.9"
+  "fast-uri@4.2.2": "4.2.3"
+  "zod@4.3.6": "4.6.7"
+  "@modelcontextprotocol/sdk>@hono/node-server": "2.1.3"
   "kimi-code>@tailwindcss/vite": "4.1.18"
   "kimi-code>tailwindcss": "4.1.18"
   "micromark-extension-math>katex": "0.18.2"

@@ -9,8 +9,9 @@ The package provides onboarding, diagnostics, a bundled Python adapter, durable
 jobs, request provenance, session-level tool registration, a branded Web UI,
 and the executables used by the desktop application.
 
-Release `0.1.0-beta.1` is validated against OpenAqua commit `0e39908` and
-Hugging Face dataset revision `cc2d3c620e8ada7c62fa922cf3a827d8b42889e3`.
+Candidate `0.1.0-beta.2` retains the `0.1.0-beta.1` compatibility baseline:
+OpenAqua commit `0e39908` and Hugging Face dataset revision
+`cc2d3c620e8ada7c62fa922cf3a827d8b42889e3`.
 
 ## Commands
 

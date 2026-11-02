@@ -1,6 +1,6 @@
 {
   "name": "openaqua-harness",
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "private": true,
   "displayName": "OpenAqua-Harness",
   "description": "OpenAqua Harness — agentic early-stage water-treatment train design, evidence retrieval, constraint critique, and WContBench evaluation on the Kimi Code engine",

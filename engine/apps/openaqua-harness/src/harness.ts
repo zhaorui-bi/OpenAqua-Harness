@@ -8,7 +8,7 @@ import {
 } from '@moonshot-ai/kimi-code-sdk';
 
 import { MCP_SERVER_NAME, mcpEnvironment, resolveMcpLaunch } from './mcp/register';
-import { packageVersion, resolveOpenAquaHome, skillsDir } from './paths';
+import { packageVersion, resolveOpenAquaHome, resolveUserPath, skillsDir } from './paths';
 
 export { resolveOpenAquaHome } from './paths';
 
@@ -32,7 +32,8 @@ export async function createDefaultSession(harness: KimiHarness): Promise<Sessio
   if (model === undefined) {
     throw new Error('No model configured. Run `openaqua onboard` or set default_model in config.toml.');
   }
-  return harness.createSession({ workDir: process.cwd(), model, permission: 'auto' });
+  const workDir = resolveUserPath(process.env['OPENAQUA_WORKDIR'] ?? process.cwd());
+  return harness.createSession({ workDir, model, permission: 'auto' });
 }
 
 export async function attachOpenAquaTools(session: Session, homeDir: string): Promise<void> {
@@ -106,7 +107,7 @@ export async function promptTurnToEnd(session: Session, prompt: string): Promise
   });
 
   try {
-    await Promise.all([session.prompt(prompt), done]);
+    await Promise.all([session.promptWithSkills(prompt, [{ name: 'openaqua' }]), done]);
   } finally {
     if (timeout !== undefined) {
       clearTimeout(timeout);

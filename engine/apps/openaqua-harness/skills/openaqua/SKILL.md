@@ -55,6 +55,51 @@ contains many synonyms. If only `rawQuery` is supplied and OpenRouter is not
 configured, OpenAqua falls back to structured/rule behavior and may leave the
 contaminant list empty; report that limitation rather than guessing.
 
+Declare reporting bases as well as units. For nitrate, preserve
+`waterQuality.extra.nitrate_basis` and `treatmentTargets.extra.nitrate_basis`
+independently (`"as NO3"` or `"as N"`). Equal mg/L values on different bases
+are not interchangeable. The case audit asks for a documented common basis;
+it does not convert values. For hardness, retain
+`waterQuality.extra.hardness_basis`, for example `"as CaCO3"`.
+Use `treatmentTargets.extra.lead_ug_L` for an explicit lead endpoint, and
+`waterQuality.extra.arsenic_speciation` for measured As(III)/As(V) information.
+An unmeasured speciation remains unknown. Record design flow, when known, in
+`constraints.extra.design_flow_m3_day`. Flow alone does not establish sizing
+readiness. A named standard alone does not supply a numeric endpoint or
+establish its jurisdiction, edition, applicability, or sampling requirements.
+
+Query-file fields use upstream snake_case (`water_quality`,
+`treatment_targets`, `source_water`), while inline MCP inputs use camelCase.
+Preserved extension fields are case context: check `context_preservation`
+before interpreting them as constraints the upstream planner or critic used.
+
+## Case-to-report workflow
+
+For a treatment-design request:
+
+1. Establish runtime/data readiness and controlled contaminant names.
+2. Call `openaqua_assess_case`. Report critical blockers and bundle the most
+   decision-sensitive information needs into a concise clarification.
+   While critical blockers remain, limit work to clarification or exploratory
+   retrieval. With unresolved high-priority gaps, a requested shortlist must
+   state its conditional scope and cannot demonstrate target attainment.
+3. Call `openaqua_retrieve_evidence` for the defined case. Check whether the
+   source-water matrix, speciation, scale, operating conditions, and residuals
+   handling match the intended application; a relevance score is not this check.
+4. Run `openaqua_recommend`, preserving the result path and run manifest.
+5. Call `openaqua_audit_report` on that saved result. Read the JSON `status`
+   and issue list: successful execution of the audit job does not mean that
+   the scientific audit passed. An empty recommendation set, an unknown
+   constraint state, or malformed citations cannot substantiate a recommendation.
+6. Hand off the case, evidence, candidate trains, constraint revisions,
+   unresolved issues, uncertainty, job/output identifiers, and manifest hashes.
+
+Keep the output at technology-screening level unless an independently
+validated design basis supports additional calculations. Missing flow,
+contact-time, dose, loading, residuals, or operating data cannot be replaced
+with an invented engineering value. Treat an upstream rule pass as the result
+of the implemented checks only.
+
 ## Choosing the right tool
 
 - `openaqua_status` — inspect the checkout, Python runtime, dependencies,

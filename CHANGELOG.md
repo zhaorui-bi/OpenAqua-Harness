@@ -6,6 +6,13 @@ versioning.
 
 ## [Unreleased]
 
+### Planned
+
+- Additional dataset acquisition and curation helpers.
+- Broader real-backend integration fixtures and benchmark reporting.
+
+## [0.1.0-beta.2] - 2026-11-02
+
 ### Added
 
 - A scientific case-readiness tool that returns a versioned case state,
@@ -15,14 +22,40 @@ versioning.
 
 ### Changed
 
+- Case screening now checks quantitative values, nitrate reporting bases,
+  hardness basis, lead endpoints, arsenic speciation, and declared design flow.
+- Explicit extension context is retained across upstream normalization at the
+  adapter boundary without implying enforcement by the upstream planner.
+- CLI/REPL turns explicitly activate the OpenAqua operation skill, and Web
+  guidance follows case assessment, evidence review, recommendation, and audit.
+- Parallel research jobs use distinct default result paths, and CLI sessions
+  share the configured research workspace with the scientific tools.
 - Engineering manifests now fingerprint benchmark directories and completed
   outputs, record non-secret effective scientific settings, and retain schema-v1
   read compatibility.
 
-### Planned
+### Fixed
 
-- Additional dataset acquisition and curation helpers.
-- Broader real-backend integration fixtures and benchmark reporting.
+- Empty reports, malformed citations, and missing or unknown constraint states
+  no longer pass the structural report audit; warning and unreviewed states
+  remain visible.
+- Desktop startup waits for complete engine output lines before reading the
+  server address and bearer token; packaged backends exclude Python caches.
+
+### Security
+
+- Update compatible HTTP, URI, schema-validation, and desktop-packaging
+  dependencies while retaining dependency audits as public-release gates.
+
+### Compatibility and scope
+
+- Retains the OpenAqua commit `0e39908` and Hugging Face dataset revision
+  `cc2d3c620e8ada7c62fa922cf3a827d8b42889e3` compatibility baseline.
+- OpenAqua source, Python dependencies, and knowledge/benchmark data remain
+  external installations; they are not included in the desktop application.
+- Case screening and report audits support early-stage engineering research.
+  Software regression and synthetic-case compatibility tests do not demonstrate
+  field performance, regulatory compliance, or scientific effectiveness.
 
 ## [0.1.0-beta.1] - 2026-10-23
 
@@ -76,5 +109,6 @@ versioning.
 - Recommendations remain early-stage engineering decision support and require
   expert, regulatory, laboratory, pilot, and site-specific review.
 
-[Unreleased]: https://github.com/zhaorui-bi/OpenAqua-Harness/compare/v0.1.0-beta.1...main
-[0.1.0-beta.1]: https://github.com/zhaorui-bi/OpenAqua-Harness/tree/v0.1.0-beta.1
+[Unreleased]: https://github.com/zhaorui-bi/OpenAqua-Harness/commits/main
+[0.1.0-beta.2]: https://github.com/zhaorui-bi/OpenAqua-Harness/compare/6acc5252aff11946f6be8eca23882662ba4e8cb8...main
+[0.1.0-beta.1]: https://github.com/zhaorui-bi/OpenAqua-Harness/tree/6acc5252aff11946f6be8eca23882662ba4e8cb8

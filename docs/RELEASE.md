@@ -60,6 +60,38 @@ update that guard in the same reviewed release commit. The Release workflow
 additionally requires an annotated `v*` Git tag with that exact version. Never
 replace assets attached to an older version with a build from a newer commit.
 
+## Prepare a draft while signing credentials are pending
+
+Commit and push the candidate source, version metadata, and release notes first.
+If signing credentials are unavailable, prepare a GitHub Release **draft** for
+the candidate version. Pin its target to the exact candidate commit and state
+that signing/notarization and release acceptance are pending. Do not attach
+unsigned application artifacts as release-ready downloads, publish the draft,
+or push the release tag merely to start a workflow that cannot pass its gates.
+The separate `Desktop packages` workflow can still validate unsigned builds;
+its CI artifacts do not establish signed-release acceptance.
+
+After the required credentials and acceptance evidence are available:
+
+1. Check out the candidate commit and confirm its version and release date.
+2. Create and push an annotated tag with that exact version, for example
+   `git tag -a v0.1.0-beta.2 -m "OpenAqua Harness 0.1.0-beta.2"` followed by
+   `git push origin v0.1.0-beta.2`.
+3. Let the `Release` workflow verify, sign, notarize, package, and smoke-test
+   every target. If a prior run failed, rerun it or dispatch `release.yml`
+   with the existing annotated tag; do not create a replacement tag.
+4. The publish job may fill the matching draft with the verified artifacts
+   and current changelog notes, verify its complete asset inventory, and
+   publish it. Existing draft asset names may be replaced when retrying this
+   verified workflow; unexpected extra assets block publication.
+
+Never publish an empty or unsigned draft manually to bypass the workflow.
+An already published release is immutable for this process: the workflow
+refuses to edit it or replace its assets. API, authentication, or lookup
+failures also stop publication rather than being treated as a missing release.
+Tag pushes and manual dispatches share concurrency by tag; avoid editing or
+publishing that draft manually while its release workflow runs.
+
 ## Scientific acceptance smoke
 
 Run this gate with a dedicated test provider account and non-sensitive example
@@ -182,7 +214,7 @@ Create an annotated tag from the accepted commit and push it. The `Release`
 workflow verifies that the tag, package, changelog, and citation versions agree;
 builds signed native artifacts; verifies signatures/notarization; launches each
 packaged app; generates combined checksums; and creates a GitHub prerelease or
-release containing:
+release (or completes its prepared draft) containing:
 
 - platform and architecture-labelled installers/archives;
 - `SHA256SUMS`, `SBOM.spdx.json`, and `THIRD_PARTY_NOTICES.md`;

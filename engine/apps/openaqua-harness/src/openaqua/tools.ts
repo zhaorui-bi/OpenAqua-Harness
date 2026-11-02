@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import process from 'node:process';
 
@@ -145,30 +146,30 @@ const queryFileSchema = nonEmptyPath.describe(`JSON file containing an OpenAqua 
 
 const waterQualitySchema = z
   .object({
-    pH: finiteMeasurement.optional(),
+    pH: finiteMeasurement.optional().describe('Measured pH, dimensionless. Preserve the reported value and investigate unusual values rather than assuming a conventional range.'),
     turbidity_NTU: finiteMeasurement.nonnegative().optional(),
     arsenic_ug_L: finiteMeasurement.nonnegative().optional(),
-    nitrate_mg_L: finiteMeasurement.nonnegative().optional(),
+    nitrate_mg_L: finiteMeasurement.nonnegative().optional().describe('Reported nitrate concentration in mg/L. Declare extra.nitrate_basis as "as NO3" or "as N"; do not infer the reporting basis or automatically convert it.'),
     fluoride_mg_L: finiteMeasurement.nonnegative().optional(),
     toc_mg_L: finiteMeasurement.nonnegative().optional(),
     iron_mg_L: finiteMeasurement.nonnegative().optional(),
-    hardness_mg_L: finiteMeasurement.nonnegative().optional(),
+    hardness_mg_L: finiteMeasurement.nonnegative().optional().describe('Reported hardness in mg/L. Declare extra.hardness_basis as "as CaCO3" when applicable; do not infer the reporting basis or automatically convert it.'),
     e_coli_CFU_100mL: finiteMeasurement.nonnegative().optional(),
     lead_ug_L: finiteMeasurement.nonnegative().optional(),
-    extra: extraRecord,
+    extra: extraRecord.describe('Additional source-water measurements and reporting metadata. Use nitrate_basis ("as NO3" or "as N") and hardness_basis ("as CaCO3"); include units in other measurement keys. Unknown values must remain absent.'),
   })
   .strict();
 
 const treatmentTargetsSchema = z
   .object({
     arsenic_ug_L: finiteMeasurement.nonnegative().optional(),
-    nitrate_mg_L: finiteMeasurement.nonnegative().optional(),
+    nitrate_mg_L: finiteMeasurement.nonnegative().optional().describe('Nitrate effluent target in mg/L. Declare extra.nitrate_basis as "as NO3" or "as N" independently of the influent basis; do not infer or automatically convert it.'),
     fluoride_mg_L: finiteMeasurement.nonnegative().optional(),
     turbidity_NTU: finiteMeasurement.nonnegative().optional(),
     toc_mg_L: finiteMeasurement.nonnegative().optional(),
     e_coli: z.string().trim().max(256).optional(),
     compliance_standard: z.string().trim().max(256).optional(),
-    extra: extraRecord,
+    extra: extraRecord.describe('Additional effluent targets and reporting metadata. Use lead_ug_L for a lead target in µg/L and nitrate_basis ("as NO3" or "as N") for nitrate. Preserve the stated target and basis; do not automatically convert values.'),
   })
   .strict();
 
@@ -181,7 +182,7 @@ const constraintsSchema = z
     use_for_drinking: z.boolean().optional(),
     footprint_constraint: z.string().trim().max(512).optional(),
     chemical_dosing_allowed: z.boolean().optional(),
-    extra: extraRecord,
+    extra: extraRecord.describe('Additional site constraints. Use design_flow_m3_day for a numeric design flow in m³/day; preserve the reported units and do not invent or automatically convert a flow.'),
   })
   .strict();
 
@@ -400,7 +401,8 @@ function resolveJobPath(value: string, workDir: string): string {
 function outputPath(args: Record<string, unknown>, workDir: string, label: string): string {
   if (typeof args['output'] === 'string') return resolveJobPath(args['output'], workDir);
   const stamp = new Date().toISOString().replaceAll(/[-:.TZ]/g, '').slice(0, 14);
-  return path.join(workDir, 'openaqua-output', `${label}_${stamp}.json`);
+  const nonce = randomBytes(6).toString('hex');
+  return path.join(workDir, 'openaqua-output', `${label}_${stamp}_${nonce}.json`);
 }
 
 function inlineJsonArgument(value: unknown, label: string): string | ToolResult {

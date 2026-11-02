@@ -1,0 +1,17 @@
+{
+  "query_id": "example-lead-source-unknown",
+  "source_water": "unknown",
+  "water_quality": {
+    "lead_ug_L": 100
+  },
+  "contaminants": ["lead"],
+  "treatment_targets": {
+    "extra": {
+      "lead_ug_L": 10
+    }
+  },
+  "constraints": {
+    "use_for_drinking": true
+  },
+  "context": "Synthetic blocked case. The lead sample location and source-water context are unknown; source contamination and distribution/plumbing release have not been distinguished. The target is study-defined, not a compliance determination. Clarify the sampling context before suggesting a source-treatment train."
+}

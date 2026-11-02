@@ -15,6 +15,7 @@ import contextlib
 import importlib.metadata
 import importlib.util
 import json
+import math
 import os
 import re
 import subprocess
@@ -23,7 +24,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Callable
 
-ADAPTER_VERSION = "0.1.0-beta.1"
+ADAPTER_VERSION = "0.1.0-beta.2"
 CALLER_CWD = Path.cwd()
 
 
@@ -168,8 +169,18 @@ def model_json(model: Any) -> Any:
     return model
 
 
+def json_safe_value(value: Any) -> Any:
+    if isinstance(value, float) and not math.isfinite(value):
+        return str(value).replace("nan", "NaN").replace("inf", "Infinity")
+    if isinstance(value, dict):
+        return {key: json_safe_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [json_safe_value(item) for item in value]
+    return value
+
+
 def write_json_file(payload: Any, output: str) -> None:
-    rendered = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=False)
+    rendered = json.dumps(json_safe_value(payload), ensure_ascii=False, indent=2, sort_keys=False, allow_nan=False)
     target = resolve_external_path(output)
     target.parent.mkdir(parents=True, exist_ok=True)
     descriptor, temporary_name = tempfile.mkstemp(
@@ -191,7 +202,7 @@ def write_json_file(payload: Any, output: str) -> None:
 def emit(payload: Any, output: str | None = None) -> None:
     if output:
         write_json_file(payload, output)
-    print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=False))
+    print(json.dumps(json_safe_value(payload), ensure_ascii=False, indent=2, sort_keys=False, allow_nan=False))
 
 
 def repository_revision(repo: Path) -> str:
@@ -308,6 +319,22 @@ def load_user_query(args: argparse.Namespace) -> Any:
     value = load_json_source(args.query_json, args.query_file, "query")
     if not isinstance(value, dict):
         raise ValueError("query must be a JSON object")
+    for section in ("water_quality", "treatment_targets"):
+        measurements = value.get(section)
+        if not isinstance(measurements, dict):
+            continue
+        for field, measurement in measurements.items():
+            if field in _MEASUREMENT_UNITS and isinstance(measurement, bool):
+                raise ValueError(f"{section}.{field} must be a numeric measurement, not a boolean")
+        extra = measurements.get("extra")
+        if isinstance(extra, dict):
+            for field, measurement in extra.items():
+                if field in _MEASUREMENT_UNITS and isinstance(measurement, bool):
+                    raise ValueError(f"{section}.extra.{field} must be a numeric measurement, not a boolean")
+    constraints = value.get("constraints")
+    if isinstance(constraints, dict) and isinstance(constraints.get("extra"), dict):
+        if isinstance(constraints["extra"].get("design_flow_m3_day"), bool):
+            raise ValueError("constraints.extra.design_flow_m3_day must be a numeric flow, not a boolean")
     return UserQuery(**value)
 
 
@@ -337,8 +364,10 @@ def command_catalog(args: argparse.Namespace) -> dict[str, Any]:
 def command_normalize(args: argparse.Namespace) -> dict[str, Any]:
     from app.agents.parser_agent import TaskParserAgent
 
-    normalized = TaskParserAgent().run(load_user_query(args))
-    return {"normalized_query": model_json(normalized)}
+    query = load_user_query(args)
+    normalized = TaskParserAgent().run(query)
+    data, preservation = retain_declared_context(normalized, query)
+    return {"normalized_query": data, "context_preservation": preservation}
 
 
 _MEASUREMENT_UNITS = {
@@ -360,6 +389,7 @@ _TARGET_FIELDS = {
     "turbidity": "turbidity_NTU",
     "toc": "toc_mg_L",
     "e_coli": "e_coli",
+    "lead": "extra.lead_ug_L",
 }
 _PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2}
 
@@ -367,6 +397,27 @@ _PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2}
 def _as_mapping(value: Any) -> dict[str, Any]:
     value = model_json(value)
     return value if isinstance(value, dict) else {}
+
+
+def retain_declared_context(normalized: Any, query: Any) -> tuple[dict[str, Any], dict[str, Any]]:
+    data = dict(_as_mapping(normalized))
+    declared = _as_mapping(query)
+    retained_fields = []
+    for section in ("water_quality", "treatment_targets", "constraints"):
+        explicit_extra = _as_mapping(_as_mapping(declared.get(section)).get("extra"))
+        if not explicit_extra:
+            continue
+        values = dict(_as_mapping(data.get(section)))
+        values["extra"] = {**_as_mapping(values.get("extra")), **explicit_extra}
+        data[section] = values
+        retained_fields.extend(f"{section}.extra.{field}" for field in sorted(explicit_extra))
+    return data, {
+        "retained_fields": retained_fields,
+        "scope": (
+            "Explicit extra fields are retained in the Harness case state and output after upstream parsing. "
+            "Retention does not establish that the upstream planner, retriever, or critic used or enforced these fields."
+        ),
+    }
 
 
 def _has_value(value: Any) -> bool:
@@ -381,24 +432,48 @@ def _has_value(value: Any) -> bool:
 
 def _measurement_records(values: dict[str, Any]) -> list[dict[str, Any]]:
     records = []
+    extra = _as_mapping(values.get("extra"))
     for field, value in values.items():
         if field == "extra" or not _has_value(value):
             continue
-        records.append(
-            {
-                "field": field,
-                "value": value,
-                "unit": _MEASUREMENT_UNITS.get(field),
-            }
-        )
-    extra = values.get("extra")
-    if isinstance(extra, dict):
-        records.extend(
-            {"field": f"extra.{field}", "value": value, "unit": None}
-            for field, value in sorted(extra.items())
-            if _has_value(value)
-        )
+        record = {
+            "field": field,
+            "value": value,
+            "unit": _MEASUREMENT_UNITS.get(field),
+        }
+        if field in {"nitrate_mg_L", "hardness_mg_L"}:
+            record["basis"] = extra.get(field.removesuffix("_mg_L") + "_basis")
+        records.append(record)
+    records.extend(
+        {
+            "field": f"extra.{field}",
+            "value": value,
+            "unit": _MEASUREMENT_UNITS.get(field),
+        }
+        for field, value in sorted(extra.items())
+        if _has_value(value)
+    )
     return records
+
+
+def _is_finite_number(value: Any) -> bool:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
+
+
+def _nitrate_basis(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    token = re.sub(r"[\s_-]+", "", value.lower().replace("₃", "3"))
+    if token in {"asn", "n", "no3n", "nitraten", "nitrateasn"}:
+        return "as_N"
+    if token in {"asno3", "no3", "nitrateasno3"}:
+        return "as_NO3"
+    return None
 
 
 def _add_information_action(
@@ -442,6 +517,110 @@ def build_case_assessment(normalized: Any) -> dict[str, Any]:
     source_water = str(data.get("source_water") or "unknown").strip() or "unknown"
     actions: list[dict[str, Any]] = []
     seen: set[str] = set()
+    water_extra = _as_mapping(water_quality.get("extra"))
+    target_extra = _as_mapping(targets.get("extra"))
+    constraint_extra = _as_mapping(constraints.get("extra"))
+
+    for section, values in (("water_quality", water_quality), ("treatment_targets", targets)):
+        measurements = [(field, value) for field, value in values.items() if field != "extra"]
+        measurements.extend(
+            (f"extra.{field}", value)
+            for field, value in _as_mapping(values.get("extra")).items()
+        )
+        for field, value in measurements:
+            name = field.removeprefix("extra.")
+            if name not in _MEASUREMENT_UNITS or value is None:
+                continue
+            if not _is_finite_number(value) or (name != "pH" and value < 0):
+                _add_information_action(
+                    actions,
+                    seen,
+                    code="CASE-VALUE-001",
+                    field=f"{section}.{field}",
+                    priority="critical",
+                    action_type="verify_measurement",
+                    rationale="A quantitative value is non-numeric, non-finite, or negative for a nonnegative measurement.",
+                    decision_impact="Correct the value and its units before using it to screen treatment options.",
+                )
+            elif name == "pH" and not 0 <= value <= 14:
+                _add_information_action(
+                    actions,
+                    seen,
+                    code="CASE-PH-001",
+                    field=f"{section}.{field}",
+                    priority="high",
+                    action_type="verify_measurement",
+                    rationale="The reported pH lies outside the conventional 0–14 range for ordinary aqueous systems.",
+                    decision_impact="Verify the sample matrix and measurement method; this is a review flag, not an absolute physical limit.",
+                )
+
+    if "nitrate" in contaminant_set or any(
+        _has_value(values.get("nitrate_mg_L")) for values in (water_quality, targets)
+    ):
+        bases = {}
+        for section, extra in (("water_quality", water_extra), ("treatment_targets", target_extra)):
+            bases[section] = _nitrate_basis(extra.get("nitrate_basis"))
+            if bases[section] is None:
+                _add_information_action(
+                    actions,
+                    seen,
+                    code="CASE-NO3-001",
+                    field=f"{section}.extra.nitrate_basis",
+                    priority="high",
+                    action_type="clarify_units",
+                    rationale="The nitrate reporting basis is missing or unrecognized; specify as_N or as_NO3.",
+                    decision_impact="Influent and target mg/L values cannot be compared until their mass bases are explicit; no automatic conversion is applied.",
+                )
+        if all(bases.values()) and bases["water_quality"] != bases["treatment_targets"]:
+            _add_information_action(
+                actions,
+                seen,
+                code="CASE-NO3-002",
+                field="treatment_targets.extra.nitrate_basis",
+                priority="high",
+                action_type="clarify_units",
+                rationale="Influent and target nitrate concentrations use different mass bases.",
+                decision_impact="Provide values on a documented common basis before comparing treatment requirements; no automatic conversion is applied.",
+            )
+
+    if _has_value(water_quality.get("hardness_mg_L")) and (
+        not isinstance(water_extra.get("hardness_basis"), str)
+        or water_extra["hardness_basis"].strip().lower() in {"", "unknown", "unspecified"}
+    ):
+        _add_information_action(
+            actions,
+            seen,
+            code="CASE-HARDNESS-001",
+            field="water_quality.extra.hardness_basis",
+            priority="medium",
+            action_type="clarify_units",
+            rationale="Hardness is reported in mg/L without an explicit reporting basis.",
+            decision_impact="State the basis, such as as CaCO3, before comparing evidence or calculating treatment demand.",
+        )
+
+    design_flow = constraint_extra.get("design_flow_m3_day")
+    if design_flow is None:
+        _add_information_action(
+            actions,
+            seen,
+            code="CASE-FLOW-001",
+            field="constraints.extra.design_flow_m3_day",
+            priority="medium",
+            action_type="clarify_design_basis",
+            rationale="A design flow in m³/day has not been supplied.",
+            decision_impact="Only technology screening is supported; process sizing and hydraulic loading require an explicit design flow.",
+        )
+    elif not _is_finite_number(design_flow) or design_flow <= 0:
+        _add_information_action(
+            actions,
+            seen,
+            code="CASE-FLOW-002",
+            field="constraints.extra.design_flow_m3_day",
+            priority="critical",
+            action_type="verify_measurement",
+            rationale="The design flow must be a finite positive number in m³/day.",
+            decision_impact="Correct the declared flow before using it as a design basis.",
+        )
 
     if source_water.lower() == "unknown":
         _add_information_action(
@@ -465,7 +644,7 @@ def build_case_assessment(normalized: Any) -> dict[str, Any]:
             rationale="No contaminant was mapped to the controlled taxonomy.",
             decision_impact="A treatment train cannot be screened without a defined treatment objective.",
         )
-    if not _measurement_records(water_quality):
+    if not any(_is_finite_number(record["value"]) for record in _measurement_records(water_quality)):
         _add_information_action(
             actions,
             seen,
@@ -501,7 +680,12 @@ def build_case_assessment(normalized: Any) -> dict[str, Any]:
                 decision_impact="Influent loading affects treatment intensity and whether the stated target is technically meaningful.",
             )
         target_field = _TARGET_FIELDS.get(key)
-        if target_field is not None and not _has_value(targets.get(target_field)):
+        target_value = (
+            target_extra.get(target_field.removeprefix("extra."))
+            if target_field is not None and target_field.startswith("extra.")
+            else targets.get(target_field)
+        )
+        if target_field is not None and not _has_value(target_value):
             _add_information_action(
                 actions,
                 seen,
@@ -573,6 +757,20 @@ def build_case_assessment(normalized: Any) -> dict[str, Any]:
             )
 
     if "arsenic" in contaminant_set:
+        arsenic_speciation = water_extra.get("arsenic_speciation")
+        if not isinstance(arsenic_speciation, str) or arsenic_speciation.strip().lower() in {
+            "", "unknown", "unspecified", "not measured",
+        }:
+            _add_information_action(
+                actions,
+                seen,
+                code="CASE-AS-003",
+                field="water_quality.extra.arsenic_speciation",
+                priority="medium",
+                action_type="measure_speciation",
+                rationale="The arsenic oxidation-state distribution is not established.",
+                decision_impact="Clarify As(III)/As(V) before transferring evidence or deciding whether pre-oxidation is needed; total arsenic alone does not establish speciation.",
+            )
         if not _has_value(water_quality.get("pH")):
             _add_information_action(
                 actions,
@@ -644,7 +842,12 @@ def build_case_assessment(normalized: Any) -> dict[str, Any]:
             "constraints": {
                 key: value
                 for key, value in constraints.items()
-                if key != "extra" and value is not None
+                if value is not None
+            },
+            "design_basis": {
+                "design_flow_m3_day": design_flow,
+                "sizing_ready": False,
+                "interpretation": "This audit supports technology screening, not process sizing or a final engineering design.",
             },
             "context": data.get("context"),
             "missing_fields": missing_fields,
@@ -679,10 +882,13 @@ def build_case_assessment(normalized: Any) -> dict[str, Any]:
 def command_assess_case(args: argparse.Namespace) -> dict[str, Any]:
     from app.agents.parser_agent import TaskParserAgent
 
-    normalized = TaskParserAgent().run(load_user_query(args))
+    query = load_user_query(args)
+    normalized = TaskParserAgent().run(query)
+    data, preservation = retain_declared_context(normalized, query)
     return {
-        "normalized_query": model_json(normalized),
-        **build_case_assessment(normalized),
+        "normalized_query": data,
+        "context_preservation": preservation,
+        **build_case_assessment(data),
     }
 
 
@@ -691,18 +897,27 @@ def command_recommend(args: argparse.Namespace) -> dict[str, Any]:
 
     if not 1 <= args.top_k <= 10:
         raise ValueError("top-k must be between 1 and 10")
-    report = WaterTreatmentPipeline().run(load_user_query(args), top_k=args.top_k)
-    return model_json(report)
+    query = load_user_query(args)
+    report = model_json(WaterTreatmentPipeline().run(query, top_k=args.top_k))
+    if isinstance(report, dict) and isinstance(report.get("normalized_query"), dict):
+        data, preservation = retain_declared_context(report["normalized_query"], query)
+        report["normalized_query"] = data
+        report["context_preservation"] = preservation
+        report["case_assessment"] = build_case_assessment(data)
+    return report
 
 
 def command_retrieve(args: argparse.Namespace) -> dict[str, Any]:
     from app.agents.parser_agent import TaskParserAgent
     from app.agents.retrieval_agent import RetrievalAgent
 
-    normalized = TaskParserAgent().run(load_user_query(args))
+    query = load_user_query(args)
+    normalized = TaskParserAgent().run(query)
     retrieval = RetrievalAgent().run(normalized)
+    data, preservation = retain_declared_context(normalized, query)
     return {
-        "normalized_query": model_json(normalized),
+        "normalized_query": data,
+        "context_preservation": preservation,
         "retrieval": model_json(retrieval),
     }
 
@@ -761,11 +976,14 @@ def command_check_constraints(args: argparse.Namespace) -> dict[str, Any]:
     from app.agents.critic_agent import ConstraintCriticAgent
     from app.agents.parser_agent import TaskParserAgent
 
-    normalized = TaskParserAgent().run(load_user_query(args))
+    query = load_user_query(args)
+    normalized = TaskParserAgent().run(query)
     candidates = candidate_bundle(args, normalized)
     report = ConstraintCriticAgent().run(candidates, normalized)
+    data, preservation = retain_declared_context(normalized, query)
     return {
-        "normalized_query": model_json(normalized),
+        "normalized_query": data,
+        "context_preservation": preservation,
         "candidates_after_revision": model_json(candidates),
         "constraint_report": model_json(report),
     }
@@ -945,6 +1163,14 @@ def command_audit_report(args: argparse.Namespace) -> dict[str, Any]:
     all_issues: list[dict[str, Any]] = []
     support_counts = {support_type: 0 for support_type in sorted(_ALLOWED_SUPPORT_TYPES)}
     malformed_claims = 0
+    if not recommendations:
+        _audit_issue(
+            all_issues,
+            "AUDIT-012",
+            "critical",
+            "The report contains no treatment recommendations to audit.",
+            "recommendations",
+        )
 
     for index, recommendation in enumerate(recommendations, start=1):
         location = f"recommendations[{index - 1}]"
@@ -999,13 +1225,20 @@ def command_audit_report(args: argparse.Namespace) -> dict[str, Any]:
                     citation_location,
                 )
                 continue
-            support_type = str(citation.get("support_type") or "").strip()
-            claim = str(citation.get("claim") or "").strip()
-            source_id = str(citation.get("source_id") or "").strip()
-            chunk_id = str(citation.get("chunk_id") or "").strip()
-            excerpt = str(citation.get("text_excerpt") or "").strip()
+            fields = {}
+            invalid_fields = []
+            for field in ("support_type", "claim", "source_id", "chunk_id", "text_excerpt"):
+                value = citation.get(field)
+                fields[field] = value.strip() if isinstance(value, str) else ""
+                if value is not None and not isinstance(value, str):
+                    invalid_fields.append(field)
+            support_type = fields["support_type"]
+            claim = fields["claim"]
+            source_id = fields["source_id"]
+            chunk_id = fields["chunk_id"]
+            excerpt = fields["text_excerpt"]
             valid_support = support_type in _ALLOWED_SUPPORT_TYPES
-            structurally_complete = bool(claim) and valid_support
+            structurally_complete = bool(claim) and valid_support and not invalid_fields
             if support_type == "evidence_backed":
                 structurally_complete = structurally_complete and bool(
                     source_id and chunk_id and excerpt
@@ -1017,8 +1250,8 @@ def command_audit_report(args: argparse.Namespace) -> dict[str, Any]:
                 _audit_issue(
                     issues,
                     "AUDIT-005",
-                    "critical" if support_type == "evidence_backed" else "warning",
-                    "Claim-evidence entry is structurally incomplete or has an unsupported support type.",
+                    "critical" if support_type == "evidence_backed" or invalid_fields else "warning",
+                    "Claim-evidence entry has missing text, non-string citation fields, or an unsupported support type.",
                     citation_location,
                 )
             if valid_support:
@@ -1085,6 +1318,22 @@ def command_audit_report(args: argparse.Namespace) -> dict[str, Any]:
                     "AUDIT-008",
                     "critical",
                     "Recommendation retains a failed constraint report.",
+                    f"{location}.constraint_report.overall_status",
+                )
+            elif constraint_status in ("WARNING", "N/A"):
+                _audit_issue(
+                    issues,
+                    "AUDIT-014",
+                    "warning",
+                    "The constraint report declares a warning or an unavailable/not-applicable check, rather than a pass.",
+                    f"{location}.constraint_report.overall_status",
+                )
+            elif constraint_status != "PASS":
+                _audit_issue(
+                    issues,
+                    "AUDIT-013",
+                    "critical",
+                    "Constraint status is missing or is not a recognized OpenAqua status (PASS, WARNING, FAIL, N/A).",
                     f"{location}.constraint_report.overall_status",
                 )
         else:
@@ -1154,6 +1403,7 @@ def command_audit_report(args: argparse.Namespace) -> dict[str, Any]:
             "warnings": warning_count,
         },
         "recommendations": recommendation_audits,
+        "issues": all_issues,
         "claim_ledger": claim_ledger,
         "limitations": [
             "This audit checks structure, declared support type, constraint status, and selected quantitative-claim signals.",

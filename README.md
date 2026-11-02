@@ -4,7 +4,7 @@
 
 <h1 align="center">OpenAqua Harness</h1>
 
-<p align="center"><strong>Beta release · v0.1.0-beta.1</strong></p>
+<p align="center"><strong>Beta candidate · v0.1.0-beta.2</strong></p>
 
 <p align="center">
   <strong>An agentic workbench for evidence-grounded, early-stage water-treatment train design.</strong>
@@ -142,7 +142,8 @@ unzip ../hf_openaqua/data.zip -d .
 
 The archive already contains its top-level `data/` directory; extract it into
 `water_treatment_agent`, not into an existing `data/` directory. The Git and
-Hugging Face revisions above are the `0.1.0-beta.1` validation baseline; record
+Hugging Face revisions above are the `0.1.0-beta.1` validation baseline,
+retained for `0.1.0-beta.2`; record
 and revalidate both if you intentionally update them. Keep
 `../hf_openaqua/WContBench/` for evaluation. `RawData.zip` is optional.
 
@@ -214,6 +215,15 @@ show constraint revisions and uncertainty, and save the JSON result.
 The agent should preserve the units, inspect taxonomy readiness, launch a
 durable recommendation job, and return the job/output identifiers rather than
 inventing performance values.
+
+Follow the case-to-report workflow: **assess and clarify the case → review
+evidence applicability → compare treatment trains → audit and hand off**.
+Call `openaqua_assess_case` before recommendation and `openaqua_audit_report`
+on the saved result; job success and scientific audit status are separate.
+Declare influent and target nitrate reporting bases independently (as NO₃ or
+as N), and retain lead endpoints, arsenic speciation, and design flow through
+compatible `extra` fields. See the
+[domain workflow and synthetic cases (简体中文)](./docs/zh-CN/DOMAIN_WORKFLOW.md).
 
 ## CLI reference
 

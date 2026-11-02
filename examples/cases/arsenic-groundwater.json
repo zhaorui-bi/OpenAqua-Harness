@@ -1,0 +1,25 @@
+{
+  "query_id": "example-arsenic-groundwater",
+  "source_water": "groundwater",
+  "water_quality": {
+    "pH": 7.2,
+    "arsenic_ug_L": 150,
+    "iron_mg_L": 0.2
+  },
+  "contaminants": ["arsenic"],
+  "treatment_targets": {
+    "arsenic_ug_L": 10
+  },
+  "constraints": {
+    "budget": "low",
+    "energy": "grid_connected",
+    "brine_disposal": false,
+    "operator_skill": "low",
+    "use_for_drinking": true,
+    "chemical_dosing_allowed": true,
+    "extra": {
+      "design_flow_m3_day": 20
+    }
+  },
+  "context": "Synthetic screening example, not field measurements. The effluent value is a study-defined target, not a determination of regulatory applicability. Arsenic speciation, competing ions, seasonal variability and spent-media/sludge disposal remain unresolved. Do not infer sizing, dose, performance or compliance."
+}

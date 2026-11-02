@@ -2,10 +2,10 @@
   "spdxVersion": "SPDX-2.3",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "OpenAqua Harness 0.1.0-beta.1",
-  "documentNamespace": "https://github.com/zhaorui-bi/OpenAqua-Harness/releases/tag/v0.1.0-beta.1/SBOM.spdx.json",
+  "name": "OpenAqua Harness 0.1.0-beta.2",
+  "documentNamespace": "https://github.com/zhaorui-bi/OpenAqua-Harness/releases/tag/v0.1.0-beta.2/SBOM.spdx.json",
   "creationInfo": {
-    "created": "2026-10-23T00:00:00Z",
+    "created": "2026-11-02T00:00:00Z",
     "creators": [
       "Organization: OpenAqua Harness contributors",
       "Tool: pnpm-12.4.1",
@@ -77,8 +77,8 @@
     {
       "SPDXID": "SPDXRef-OpenAqua-Harness",
       "name": "openaqua-harness",
-      "versionInfo": "0.1.0-beta.1",
-      "downloadLocation": "git+https://github.com/zhaorui-bi/OpenAqua-Harness.git#v0.1.0-beta.1",
+      "versionInfo": "0.1.0-beta.2",
+      "downloadLocation": "git+https://github.com/zhaorui-bi/OpenAqua-Harness.git#v0.1.0-beta.2",
       "filesAnalyzed": false,
       "primaryPackagePurpose": "APPLICATION",
       "licenseConcluded": "MIT",
@@ -90,7 +90,7 @@
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:github/zhaorui-bi/OpenAqua-Harness@0.1.0-beta.1"
+          "referenceLocator": "pkg:github/zhaorui-bi/OpenAqua-Harness@0.1.0-beta.2"
         }
       ]
     },
@@ -2736,6 +2736,29 @@
         {
           "algorithm": "SHA512",
           "checksumValue": "7529de4b9aa189ab995860c278ae28ebde5777d9d4363be249908c42b8f5d1e7adafc5259f5b9c9fa6dba6138ce94ca700c32d348cd9352a4bf6f9c0489c2b3d"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package--hono-node-server-2.1.3-3cabf8f7607c0754",
+      "name": "@hono/node-server",
+      "versionInfo": "2.1.3",
+      "downloadLocation": "https://registry.npmjs.org/@hono/node-server/-/node-server-2.1.3.tgz",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/%40hono/node-server@2.1.3"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "4c0fff9d632a3e16df75f9de00293ab796bd7aa6d2f6500110fc8a9f4ff16536a1dc7dd4d9769583ce6b245974fc5ca2b74239e766031e05c65527f71b0a9b53"
         }
       ]
     },
@@ -9559,10 +9582,10 @@
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-body-parser-2.3.0-deaf905fbd1f323e",
+      "SPDXID": "SPDXRef-Package-body-parser-2.4.0-ba5d92e7f4d5073e",
       "name": "body-parser",
-      "versionInfo": "2.3.0",
-      "downloadLocation": "https://registry.npmjs.org/body-parser/-/body-parser-2.3.0.tgz",
+      "versionInfo": "2.4.0",
+      "downloadLocation": "https://registry.npmjs.org/body-parser/-/body-parser-2.4.0.tgz",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
@@ -9571,13 +9594,13 @@
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/body-parser@2.3.0"
+          "referenceLocator": "pkg:npm/body-parser@2.4.0"
         }
       ],
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "d9c1a626ea5a36083e414c152c0b9c0ee5aea0c67a117f621c346cc19e65b0d6049b03da4649cc3c22d9cf4ef24f356affcde9e28ff0cdb0d96c1ad3bc619323"
+          "checksumValue": "21f93529c2ebc5a1add6871c41a81034534d3aa46dd4b16e7a11271c7cc1f19e9c460231454d5305a888b14882740fa0cb93cbed8d485f7d4334a9119b1b578d"
         }
       ]
     },
@@ -13561,10 +13584,10 @@
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-fast-uri-3.1.8-9e14dc42f3fc8f48",
+      "SPDXID": "SPDXRef-Package-fast-uri-3.1.9-f5a087474c08eb6d",
       "name": "fast-uri",
-      "versionInfo": "3.1.8",
-      "downloadLocation": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.8.tgz",
+      "versionInfo": "3.1.9",
+      "downloadLocation": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.9.tgz",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "BSD-3-Clause",
@@ -13573,21 +13596,21 @@
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/fast-uri@3.1.8"
+          "referenceLocator": "pkg:npm/fast-uri@3.1.9"
         }
       ],
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "19932d6544cd4693952040a85f02cd652e7150613e99535b4c1f21ffb4708764c559c05088fcd3832662d39045f543192a42c9bfc5c14494e553bce0f3e65f32"
+          "checksumValue": "852ff45addd86b4e37a0a5ecd2c231acca4a4084d784c2c8ad500a2978b8828cc60bdbfb6115959d7219ce334f4ced3633d05dc4b096a8ad7245780dce257225"
         }
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-fast-uri-4.2.2-a65393b33c1fa87a",
+      "SPDXID": "SPDXRef-Package-fast-uri-4.2.3-fb2c2eafb87cb45d",
       "name": "fast-uri",
-      "versionInfo": "4.2.2",
-      "downloadLocation": "https://registry.npmjs.org/fast-uri/-/fast-uri-4.2.2.tgz",
+      "versionInfo": "4.2.3",
+      "downloadLocation": "https://registry.npmjs.org/fast-uri/-/fast-uri-4.2.3.tgz",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "BSD-3-Clause",
@@ -13596,13 +13619,13 @@
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/fast-uri@4.2.2"
+          "referenceLocator": "pkg:npm/fast-uri@4.2.3"
         }
       ],
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "13056950cccb54d3a67165b4ce2e46dc9270928a41e975e39d5bcd0467eaacc32c55ec368644169797bfa5efc27d851e4ba8ede1c20ed8c9da9845bbbffef03f"
+          "checksumValue": "2353d7c0fe5e02194d95c7698edf42801e7da29d99bd97f1c3e064a861552143a03690954dc4eaa771e14d7edbaf18f9bec8a9fa7498e274ef7dff9e200efa86"
         }
       ]
     },
@@ -15397,6 +15420,29 @@
         {
           "algorithm": "SHA512",
           "checksumValue": "8a6f438c40d0e79b3d7cbe04633380bf4c8caa6301499a7a1b456f1724cc3ca5b1892047523f4d5bfaaa2e65d4c17aeb33b02fa9295309fbea45bd1c33cc98ab"
+        }
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-Package-iconv-lite-0.7.3-2adc9a5f8dbb1335",
+      "name": "iconv-lite",
+      "versionInfo": "0.7.3",
+      "downloadLocation": "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.7.3.tgz",
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "copyrightText": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceType": "purl",
+          "referenceLocator": "pkg:npm/iconv-lite@0.7.3"
+        }
+      ],
+      "checksums": [
+        {
+          "algorithm": "SHA512",
+          "checksumValue": "20a5e9bc8ce39c2f574c051b54170c7c64b410f6885ed5babfecebf91469fa1a942c4a68d28c196b1eb0c91c0f3896d66f38d8b29430bac4ec7d5af489f878b9"
         }
       ]
     },
@@ -26372,10 +26418,10 @@
       ]
     },
     {
-      "SPDXID": "SPDXRef-Package-zod-4.3.6-33ea700c68affbb1",
+      "SPDXID": "SPDXRef-Package-zod-4.6.7-0595b9492f3214d4",
       "name": "zod",
-      "versionInfo": "4.3.6",
-      "downloadLocation": "https://registry.npmjs.org/zod/-/zod-4.3.6.tgz",
+      "versionInfo": "4.6.7",
+      "downloadLocation": "https://registry.npmjs.org/zod/-/zod-4.6.7.tgz",
       "filesAnalyzed": false,
       "licenseConcluded": "NOASSERTION",
       "licenseDeclared": "MIT",
@@ -26384,13 +26430,13 @@
         {
           "referenceCategory": "PACKAGE-MANAGER",
           "referenceType": "purl",
-          "referenceLocator": "pkg:npm/zod@4.3.6"
+          "referenceLocator": "pkg:npm/zod@4.6.7"
         }
       ],
       "checksums": [
         {
           "algorithm": "SHA512",
-          "checksumValue": "adfb65ae484764e7230f090696752d65992f68f1c2b03013a78a46a6e38e3036937430d717dd70b950c9a16a0fb0a5ffdd83d0e5f1ee1774938dc6322abf9086"
+          "checksumValue": "83c5b60f6914e9af2e9ed734e777d7d6e5412b333bcaa0315bfdf3c24f37fba472176f9228eb95f9cd30043854c335753da19aa66647fab99c5333dffb7086c2"
         }
       ]
     },
@@ -27098,6 +27144,11 @@
       "spdxElementId": "SPDXRef-OpenAqua-Harness",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package--hono-node-server-1.19.17-495062ffb54ba0be"
+    },
+    {
+      "spdxElementId": "SPDXRef-OpenAqua-Harness",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-Package--hono-node-server-2.1.3-3cabf8f7607c0754"
     },
     {
       "spdxElementId": "SPDXRef-OpenAqua-Harness",
@@ -28592,7 +28643,7 @@
     {
       "spdxElementId": "SPDXRef-OpenAqua-Harness",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-body-parser-2.3.0-deaf905fbd1f323e"
+      "relatedSpdxElement": "SPDXRef-Package-body-parser-2.4.0-ba5d92e7f4d5073e"
     },
     {
       "spdxElementId": "SPDXRef-OpenAqua-Harness",
@@ -29462,12 +29513,12 @@
     {
       "spdxElementId": "SPDXRef-OpenAqua-Harness",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-fast-uri-3.1.8-9e14dc42f3fc8f48"
+      "relatedSpdxElement": "SPDXRef-Package-fast-uri-3.1.9-f5a087474c08eb6d"
     },
     {
       "spdxElementId": "SPDXRef-OpenAqua-Harness",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-fast-uri-4.2.2-a65393b33c1fa87a"
+      "relatedSpdxElement": "SPDXRef-Package-fast-uri-4.2.3-fb2c2eafb87cb45d"
     },
     {
       "spdxElementId": "SPDXRef-OpenAqua-Harness",
@@ -29858,6 +29909,11 @@
       "spdxElementId": "SPDXRef-OpenAqua-Harness",
       "relationshipType": "CONTAINS",
       "relatedSpdxElement": "SPDXRef-Package-iconv-lite-0.7.2-1124c04718746f4d"
+    },
+    {
+      "spdxElementId": "SPDXRef-OpenAqua-Harness",
+      "relationshipType": "CONTAINS",
+      "relatedSpdxElement": "SPDXRef-Package-iconv-lite-0.7.3-2adc9a5f8dbb1335"
     },
     {
       "spdxElementId": "SPDXRef-OpenAqua-Harness",
@@ -32247,7 +32303,7 @@
     {
       "spdxElementId": "SPDXRef-OpenAqua-Harness",
       "relationshipType": "CONTAINS",
-      "relatedSpdxElement": "SPDXRef-Package-zod-4.3.6-33ea700c68affbb1"
+      "relatedSpdxElement": "SPDXRef-Package-zod-4.6.7-0595b9492f3214d4"
     },
     {
       "spdxElementId": "SPDXRef-OpenAqua-Harness",

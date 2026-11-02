@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -250,12 +250,13 @@ jobs:
           process.stdout.write(text.slice(bodyStart, next < 0 ? undefined : next).trim() + '\n');
           NODE
 
-      - name: Create immutable GitHub release
+      - name: Publish verified release or prepared draft
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ needs.verify.outputs.tag }}
         run: |
+          set -euo pipefail
           prerelease=()
           if [[ "$RELEASE_TAG" == *-* ]]; then prerelease=(--prerelease); fi
           mapfile -d '' assets < <(
@@ -265,8 +266,57 @@ jobs:
                  -o -name 'SHA256SUMS' -o -name 'SBOM.spdx.json' \
                  -o -name 'THIRD_PARTY_NOTICES.md' \) -print0
           )
-          gh release create "$RELEASE_TAG" "${assets[@]}" \
-            --verify-tag \
-            --title "OpenAqua Harness ${RELEASE_TAG#v}" \
-            --notes-file release-assets/RELEASE_NOTES.md \
-            "${prerelease[@]}"
+          test "${#assets[@]}" -gt 0
+          releases_file="$(mktemp)"
+          remote_assets_file="$(mktemp)"
+          trap 'rm -f "$releases_file" "$remote_assets_file"' EXIT
+          gh api --paginate --slurp "repos/$GITHUB_REPOSITORY/releases" > "$releases_file"
+          release_state="$(node - "$releases_file" "$RELEASE_TAG" <<'NODE'
+          const fs = require('node:fs');
+          const pages = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          if (!Array.isArray(pages) || pages.some((page) => !Array.isArray(page))) {
+            throw new Error('Invalid release-list response');
+          }
+          const matches = pages.flat().filter((release) => release.tag_name === process.argv[3]);
+          if (matches.length > 1) throw new Error('Multiple releases use the requested tag');
+          const release = matches[0];
+          if (release === undefined) process.stdout.write('absent');
+          else if (release.draft !== true) process.stdout.write('published');
+          else if (!Number.isSafeInteger(release.id) || release.id <= 0) {
+            throw new Error('Invalid draft release identity');
+          } else process.stdout.write(`draft:${release.id}`);
+          NODE
+          )"
+          case "$release_state" in
+            absent)
+              gh release create "$RELEASE_TAG" "${assets[@]}" \
+                --repo "$GITHUB_REPOSITORY" \
+                --verify-tag \
+                --title "OpenAqua Harness ${RELEASE_TAG#v}" \
+                --notes-file release-assets/RELEASE_NOTES.md \
+                "${prerelease[@]}"
+              ;;
+            draft:*)
+              release_id="${release_state#draft:}"
+              test "$(gh api "repos/$GITHUB_REPOSITORY/releases/$release_id" --jq '.draft')" = true
+              gh release upload "$RELEASE_TAG" "${assets[@]}" \
+                --repo "$GITHUB_REPOSITORY" --clobber
+              gh api --paginate "repos/$GITHUB_REPOSITORY/releases/$release_id/assets" \
+                --jq '.[].name' > "$remote_assets_file"
+              diff -u \
+                <(printf '%s\n' "${assets[@]##*/}" | LC_ALL=C sort) \
+                <(LC_ALL=C sort "$remote_assets_file")
+              test "$(gh api "repos/$GITHUB_REPOSITORY/releases/$release_id" --jq '.draft')" = true
+              gh release edit "$RELEASE_TAG" \
+                --repo "$GITHUB_REPOSITORY" \
+                --verify-tag \
+                --title "OpenAqua Harness ${RELEASE_TAG#v}" \
+                --notes-file release-assets/RELEASE_NOTES.md \
+                --prerelease="$([[ "$RELEASE_TAG" == *-* ]] && echo true || echo false)" \
+                --draft=false
+              ;;
+            *)
+              echo "Refusing to modify an already published release: $RELEASE_TAG" >&2
+              exit 1
+              ;;
+          esac

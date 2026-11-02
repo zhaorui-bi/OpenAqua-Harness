@@ -261,13 +261,9 @@ async function startServer(cwd, generation) {
   });
   serverProc = child;
 
-  let outputBuffer = '';
-  let engineLogBuffer = '';
-  const onData = (data) => {
-    const text = data.toString();
-    engineLogBuffer = writeCompleteEngineLogLines(engineLogBuffer + text);
-    outputBuffer = `${outputBuffer}${stripAnsi(text)}`.slice(-MAX_ENGINE_BUFFER_BYTES);
-    const match = outputBuffer.match(/Local:\s+(http:\/\/\S+)/);
+  const outputBuffers = { stdout: '', stderr: '' };
+  const onLine = (line) => {
+    const match = stripAnsi(line).match(/Local:\s+(http:\/\/\S+)/);
     if (!match || serverUrl !== null || generation !== serverGeneration) return;
     const trustedUrl = validateLocalServerUrl(match[1]);
     if (trustedUrl === null) {
@@ -280,9 +276,15 @@ async function startServer(cwd, generation) {
     console.log('[openaqua] server ready:', redactSecrets(serverUrl));
     void loadAppUrl(trustedUrl, generation);
   };
+  const onData = (stream, data) => {
+    outputBuffers[stream] = writeCompleteEngineLogLines(
+      outputBuffers[stream] + data.toString(),
+      onLine,
+    );
+  };
 
-  child.stdout.on('data', onData);
-  child.stderr.on('data', onData);
+  child.stdout.on('data', (data) => onData('stdout', data));
+  child.stderr.on('data', (data) => onData('stderr', data));
   child.once('error', (error) => {
     expectedServerExits.add(child);
     if (serverProc === child) serverProc = null;
@@ -290,7 +292,9 @@ async function startServer(cwd, generation) {
     handleServerFailure('无法启动 OpenAqua 引擎', error.message, generation);
   });
   child.once('exit', (code, signal) => {
-    if (engineLogBuffer !== '') process.stdout.write(`[engine] ${redactSecrets(engineLogBuffer)}\n`);
+    for (const buffer of Object.values(outputBuffers)) {
+      if (buffer !== '') process.stdout.write(`[engine] ${redactSecrets(buffer)}\n`);
+    }
     if (serverProc === child) serverProc = null;
     if (generation === serverGeneration) clearStartupTimer();
     if (isQuitting || expectedServerExits.has(child) || generation !== serverGeneration) return;
@@ -896,10 +900,13 @@ function validateLocalServerUrl(candidate) {
   }
 }
 
-function writeCompleteEngineLogLines(text) {
+function writeCompleteEngineLogLines(text, onLine) {
   const lines = text.split('\n');
   const remainder = lines.pop() || '';
-  for (const line of lines) process.stdout.write(`[engine] ${redactSecrets(line)}\n`);
+  for (const line of lines) {
+    process.stdout.write(`[engine] ${redactSecrets(line)}\n`);
+    onLine(line);
+  }
   return remainder.slice(-MAX_ENGINE_BUFFER_BYTES);
 }
 

@@ -12,11 +12,13 @@ import {
 import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 
+import type { Event, KimiHarness, Session } from '@moonshot-ai/kimi-code-sdk';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CliArgumentError, parseCliInvocation } from '../src/cli-args';
 import { runDoctor, formatDoctorReport } from '../src/doctor';
 import { atomicWriteText } from '../src/fs-utils';
+import { createDefaultSession, promptTurnToEnd } from '../src/harness';
 import { ensureOpenAquaMcpJson, mcpEnvironment } from '../src/mcp/register';
 import { runOnboard } from '../src/onboard';
 import { resolveOpenAquaHome, resolveUserPath } from '../src/paths';
@@ -120,6 +122,33 @@ describe('runtime paths and private persistence', () => {
     });
   });
 
+  it('creates the conversational session in the same declared research workspace as MCP', async () => {
+    const workDir = makeTempDir();
+    const createSession = vi.fn().mockResolvedValue({ id: 'workspace-session' });
+    const harness = {
+      getConfig: vi.fn().mockResolvedValue({ defaultModel: 'fixture/model' }),
+      createSession,
+    } as unknown as KimiHarness;
+    vi.stubEnv('OPENAQUA_WORKDIR', path.relative(process.cwd(), workDir));
+    try {
+      await createDefaultSession(harness);
+      expect(createSession).toHaveBeenCalledWith({
+        workDir,
+        model: 'fixture/model',
+        permission: 'auto',
+      });
+      vi.stubEnv('OPENAQUA_WORKDIR', undefined);
+      await createDefaultSession(harness);
+      expect(createSession).toHaveBeenLastCalledWith({
+        workDir: process.cwd(),
+        model: 'fixture/model',
+        permission: 'auto',
+      });
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it('tightens an existing atomic-write target instead of preserving broad permissions', () => {
     if (process.platform === 'win32') return;
     const filePath = path.join(makeTempDir(), 'private.json');
@@ -187,6 +216,66 @@ describe('runtime paths and private persistence', () => {
       }
     } finally {
       output.mockRestore();
+    }
+  });
+});
+
+describe('scientific chat turns', () => {
+  it('activates the OpenAqua skill and cleans up after the active turn ends', async () => {
+    vi.useFakeTimers();
+    const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const unsubscribe = vi.fn();
+    let emit: ((event: Event) => void) | undefined;
+    const promptWithSkills = vi.fn(async () => {
+      const identity = { agentId: 'main', sessionId: 'scientific-session' };
+      emit?.({ ...identity, type: 'turn.started', turnId: 1, origin: { kind: 'user' } });
+      emit?.({ ...identity, type: 'assistant.delta', turnId: 1, delta: 'Assessing the case.' });
+      emit?.({ ...identity, type: 'turn.ended', turnId: 2, reason: 'completed' });
+    });
+    const session = {
+      onEvent: (listener: (event: Event) => void) => {
+        emit = listener;
+        return unsubscribe;
+      },
+      promptWithSkills,
+      cancel: vi.fn(),
+    } as unknown as Session;
+    try {
+      const pending = promptTurnToEnd(session, 'Assess arsenic-bearing groundwater.');
+      await Promise.resolve();
+      expect(promptWithSkills).toHaveBeenCalledWith(
+        'Assess arsenic-bearing groundwater.',
+        [{ name: 'openaqua' }],
+      );
+      expect(unsubscribe).not.toHaveBeenCalled();
+      expect(stdout).toHaveBeenCalledWith('Assessing the case.');
+      emit?.({ agentId: 'main', sessionId: 'scientific-session', type: 'turn.ended', turnId: 1, reason: 'completed' });
+      await pending;
+      expect(unsubscribe).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      stdout.mockRestore();
+      stderr.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it('cleans up when skill activation fails before the turn starts', async () => {
+    vi.useFakeTimers();
+    const unsubscribe = vi.fn();
+    const session = {
+      onEvent: () => unsubscribe,
+      promptWithSkills: vi.fn().mockRejectedValue(new Error('OpenAqua skill is unavailable')),
+    } as unknown as Session;
+    try {
+      await expect(promptTurnToEnd(session, 'Assess a case.')).rejects.toThrow(
+        'OpenAqua skill is unavailable',
+      );
+      expect(unsubscribe).toHaveBeenCalledOnce();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
     }
   });
 });
@@ -341,6 +430,65 @@ describe('OpenAqua tool catalog', () => {
     expect(result.content[0]?.text).toContain('Input preflight failed');
     expect(listJobs(jobsRoot)).toEqual([]);
   });
+
+  it('preserves separate results and manifests for simultaneous comparison branches', async () => {
+    const root = makeTempDir();
+    const jobsRoot = path.join(root, 'jobs');
+    const backendScript = path.join(root, 'comparison-backend.mjs');
+    writeFileSync(
+      backendScript,
+      [
+        'import fs from "node:fs";',
+        'import path from "node:path";',
+        'const args = process.argv.slice(2);',
+        'const outputIndex = args.indexOf("--output");',
+        'if (outputIndex >= 0) {',
+        '  const output = args[outputIndex + 1];',
+        '  const query = JSON.parse(args[args.indexOf("--query-json") + 1]);',
+        '  fs.mkdirSync(path.dirname(output), { recursive: true });',
+        '  fs.writeFileSync(output, JSON.stringify({ branch: query.raw_query }));',
+        '} else console.log(args.includes("--version") ? "fixture-backend" : "{}");',
+      ].join('\n'),
+    );
+    const recommend = OPENAQUA_TOOLS.find((tool) => tool.name === 'openaqua_recommend');
+    if (recommend === undefined) throw new Error('recommend tool is missing');
+    const clock = vi.spyOn(Date.prototype, 'toISOString').mockReturnValue('2026-11-02T00:00:00.000Z');
+    try {
+      const results = await Promise.all(
+        ['baseline', 'comparison'].map((branch) =>
+          recommend.run(
+            { rawQuery: branch, wait: true, waitTimeoutMs: 10_000 },
+            {
+              jobsRoot,
+              env: {
+                OPENAQUA_COMMAND: JSON.stringify([process.execPath, backendScript]),
+                OPENAQUA_WORKDIR: root,
+              },
+            },
+          ),
+        ),
+      );
+      const jobs = results.map((result) => {
+        expect(result.isError).not.toBe(true);
+        return (JSON.parse(result.content[0].text) as {
+          job: { jobId: string; status: string; configuredOutput: string };
+        }).job;
+      });
+      expect(jobs[0]?.configuredOutput).not.toBe(jobs[1]?.configuredOutput);
+      for (const [index, job] of jobs.entries()) {
+        expect(job.status).toBe('succeeded');
+        const outputText = readFileSync(job.configuredOutput, 'utf8');
+        expect(JSON.parse(outputText)).toEqual({ branch: ['baseline', 'comparison'][index] });
+        const manifest = readJobRunManifest(jobsRoot, job.jobId)?.manifest;
+        expect(manifest?.configuredOutput).toBe(job.configuredOutput);
+        expect(manifest?.result?.output.sha256).toBe(
+          createHash('sha256').update(outputText).digest('hex'),
+        );
+      }
+    } finally {
+      clock.mockRestore();
+    }
+  }, 15_000);
 });
 
 describe('background jobs', () => {

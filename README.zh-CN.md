@@ -4,7 +4,7 @@
 
 <h1 align="center">OpenAqua Harness</h1>
 
-<p align="center"><strong>Beta 测试版 · v0.1.0-beta.1</strong></p>
+<p align="center"><strong>Beta 候选版 · v0.1.0-beta.2</strong></p>
 
 <p align="center">
   <strong>面向循证早期水处理工艺链设计的智能体化研究工作台。</strong>
@@ -95,7 +95,7 @@ hf download zhaorui-bi/OpenAqua data.zip WContBench/ \
 unzip ../hf_openaqua/data.zip -d .
 ```
 
-压缩包本身已包含顶层 `data/` 目录，应解压到 `water_treatment_agent`，不要解压到已有的 `data/` 目录，否则会形成错误的 `data/data/` 路径。上述 Git 与 Hugging Face 修订版是 `0.1.0-beta.1` 的验证基线；若主动升级，请记录新修订版并重新验证。保留 `../hf_openaqua/WContBench/` 用于评测；`RawData.zip` 为可选原始爬取数据。
+压缩包本身已包含顶层 `data/` 目录，应解压到 `water_treatment_agent`，不要解压到已有的 `data/` 目录，否则会形成错误的 `data/data/` 路径。上述 Git 与 Hugging Face 修订版是 `0.1.0-beta.1` 的验证基线，`0.1.0-beta.2` 继续沿用；若主动升级，请记录新修订版并重新验证。保留 `../hf_openaqua/WContBench/` 用于评测；`RawData.zip` 为可选原始爬取数据。
 
 ### 3. 配置两个模型层
 
@@ -154,6 +154,12 @@ Windows 用户请使用 `npm run cli -- <命令>` 代替 `./bin/openaqua`。
 ```
 
 智能体应保留原始单位、检查分类体系和索引状态、启动可恢复任务，并返回任务 ID 和输出路径，而不是虚构去除率或合规结论。
+
+完整的领域流程是：**案例评估与补全 → 证据适用性审查 → 候选工艺比较 → 报告审计与交付**。
+推荐前先调用 `openaqua_assess_case`，对保存的结果调用 `openaqua_audit_report`；
+任务执行成功与科学审计通过需要分别判断。硝酸盐应分别声明进、出水的 NO₃/N
+计量基准；铅目标、砷价态和设计流量通过兼容的 `extra` 字段保留。
+详见[水处理领域工作流与合成案例](./docs/zh-CN/DOMAIN_WORKFLOW.md)。
 
 ## CLI 命令
 
@@ -247,6 +253,7 @@ npm run release:check
 - [故障排查](./docs/zh-CN/TROUBLESHOOTING.md)
 - [架构说明（英文）](./docs/ARCHITECTURE.md)
 - [工程工作流规范（英文）](./docs/SCIENTIFIC_WORKFLOWS.md)
+- [水处理领域工作流与合成案例](./docs/zh-CN/DOMAIN_WORKFLOW.md)
 - [English README](./README.md)
 
 ## 署名与引用

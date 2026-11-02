@@ -1,0 +1,24 @@
+{
+  "query_id": "example-nitrate-basis-unknown",
+  "source_water": "groundwater",
+  "water_quality": {
+    "pH": 7.3,
+    "nitrate_mg_L": 60,
+    "hardness_mg_L": 240,
+    "extra": {
+      "hardness_basis": "as CaCO3"
+    }
+  },
+  "contaminants": ["nitrate"],
+  "treatment_targets": {
+    "nitrate_mg_L": 10
+  },
+  "constraints": {
+    "energy": "grid_connected",
+    "brine_disposal": false,
+    "operator_skill": "medium",
+    "use_for_drinking": true,
+    "chemical_dosing_allowed": true
+  },
+  "context": "Synthetic intentionally incomplete case. Influent and target nitrate reporting bases are unknown; neither may be assumed to mean as NO3 or as N. The target is illustrative, not a regulatory limit. Ask for both bases and a documented common basis before comparing values. Do not infer design flow."
+}

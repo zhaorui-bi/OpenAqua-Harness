@@ -45,6 +45,23 @@ provides a deterministic screening checklist for missing information; its
 readiness status is not a calibrated probability of success, safety, or
 compliance.
 
+Declare nitrate mass bases independently in
+`water_quality.extra.nitrate_basis` and
+`treatment_targets.extra.nitrate_basis` (`as NO3` or `as N`). Missing,
+unrecognized, or inconsistent bases require clarification; the case audit
+never converts values automatically. Hardness needs an explicit reporting
+basis such as `water_quality.extra.hardness_basis: "as CaCO3"`. Retain lead
+endpoints in `treatment_targets.extra.lead_ug_L`, measured arsenic speciation
+in `water_quality.extra.arsenic_speciation`, and known design flow in
+`constraints.extra.design_flow_m3_day`.
+
+Extension fields retained by the adapter remain declared case context, not
+proof of constraints enforced by the upstream planner or critic. Inspect
+`context_preservation` and preserve the unresolved conditions in the handoff.
+A screening-ready case and a supplied flow do not establish process-sizing
+readiness. The [domain workflow](./zh-CN/DOMAIN_WORKFLOW.md) includes synthetic
+cases demonstrating screening, missing reporting bases, and blocked context.
+
 ## Evidence and recommendation contract
 
 Keep three evidence classes separate:
@@ -65,6 +82,13 @@ uncertainty. Unsupported quantitative performance claims must be omitted.
 `openaqua_audit_report` can enforce this contract structurally and produce a
 claim–evidence ledger, but its checks do not establish semantic entailment or
 source quality.
+
+Audit the saved recommendation before handoff. Inspect the scientific
+`status` inside the audit artifact independently of job execution success.
+An empty recommendation set cannot pass; missing or unknown constraint
+states fail, while upstream `WARNING` and `N/A` states require review.
+These checks preserve the upstream status vocabulary and do not turn a
+structurally complete citation into verified engineering evidence.
 
 ## Machine-readable run provenance
 

@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 
 import { spawn } from 'node:child_process';
+import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { EventEmitter } from 'node:events';
 import {
   accessSync,
   constants,
@@ -14,9 +16,16 @@ import {
 } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { runInNewContext } from 'node:vm';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+await verifyDesktopStartupOutput();
+if (process.argv[2] === '--check-startup') {
+  process.stdout.write('Desktop startup: split output and bearer-token handling verified\n');
+  process.exit(0);
+}
 const productVersion = JSON.parse(
   readFileSync(path.join(root, 'package.json'), 'utf8'),
 ).version;
@@ -246,4 +255,86 @@ async function terminate(processHandle) {
 
 function redact(text) {
   return text.replace(/(#token=)[^\s]+/g, '$1<redacted>');
+}
+
+async function verifyDesktopStartupOutput() {
+  const url = 'http://127.0.0.1:58627/#token=desktop-startup-test-token';
+  const readyLine = `  Local:    ${url}\n`;
+  for (let split = 1; split < readyLine.length; split++) {
+    const probe = createStartupProbe();
+    await probe.start();
+    probe.child.stdout.emit('data', Buffer.from(readyLine.slice(0, split)));
+    probe.child.stderr.emit('data', Buffer.from('interleaved diagnostic\n'));
+    assert.equal(probe.url(), null, `readiness detected before complete line at split ${split}`);
+    assert.deepEqual(probe.failures, [], `partial URL rejected at split ${split}`);
+    probe.child.stdout.emit('data', Buffer.from(readyLine.slice(split)));
+    assert.equal(probe.url(), url);
+    assert.deepEqual(probe.loaded, [url]);
+    assert.deepEqual(probe.failures, []);
+    assert.ok(!probe.logs.join('').includes('desktop-startup-test-token'));
+  }
+
+  const stderrProbe = createStartupProbe();
+  await stderrProbe.start();
+  stderrProbe.child.stderr.emit('data', Buffer.from(`\u001b[32m${readyLine.trimEnd()}\u001b[0m\n`));
+  assert.equal(stderrProbe.url(), url);
+
+  const invalidProbe = createStartupProbe();
+  await invalidProbe.start();
+  invalidProbe.child.stdout.emit('data', Buffer.from('Local: http://example.test/#token=invalid\n'));
+  assert.equal(invalidProbe.url(), null);
+  assert.equal(invalidProbe.failures.length, 1);
+  assert.deepEqual(invalidProbe.loaded, []);
+}
+
+function createStartupProbe() {
+  const child = new EventEmitter();
+  child.stdout = new EventEmitter();
+  child.stderr = new EventEmitter();
+  const failures = [];
+  const loaded = [];
+  const logs = [];
+  const nativeRequire = createRequire(path.join(root, 'main.js'));
+  const app = {
+    setName() {},
+    getPath: () => os.tmpdir(),
+    requestSingleInstanceLock: () => false,
+    quit() {},
+    isPackaged: false,
+  };
+  const probe = runInNewContext(
+    `${readFileSync(path.join(root, 'main.js'), 'utf8')}
+      aquaHomeDir = () => testDirectory;
+      importExistingConfig = () => {};
+      isUsableDirectory = () => true;
+      showLoading = () => {};
+      resolveEngineLaunch = () => ({ command: 'test-engine', args: [], env: {} });
+      stopServer = async () => { serverProc = null; serverUrl = null; };
+      handleServerFailure = (title) => failures.push(title);
+      loadAppUrl = async (url) => { loaded.push(url); };
+      ({ start: () => startServer(testDirectory, 0), url: () => serverUrl });`,
+    {
+      require: (name) =>
+        name === 'electron'
+          ? { app }
+          : name === 'node:child_process'
+            ? { spawn: () => child }
+            : nativeRequire(name),
+      __dirname: root,
+      process: {
+        argv: [],
+        stdout: { write: (text) => logs.push(text) },
+      },
+      console: { log() {}, warn() {}, error() {} },
+      Buffer,
+      URL,
+      setTimeout: () => 0,
+      clearTimeout() {},
+      testDirectory: os.tmpdir(),
+      failures,
+      loaded,
+    },
+    { filename: 'desktop-startup-probe.js' },
+  );
+  return { ...probe, child, failures, loaded, logs };
 }

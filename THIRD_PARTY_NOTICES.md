@@ -107,6 +107,7 @@ font assets. An entry in this inventory does not imply endorsement by its author
 | @fontsource-variable/noto-serif-sc | 5.3.1 | OFL-1.1 | Google Inc. | https://fontsource.org/fonts/noto-serif-sc |
 | @google/genai | 1.52.0 | Apache-2.0 |  | https://github.com/googleapis/js-genai#readme |
 | @hono/node-server | 1.19.17 | MIT | Yusuke Wada <yusuke@kamawada.com> (https://github.com/yusukebe) | https://github.com/honojs/node-server |
+| @hono/node-server | 2.1.3 | MIT | Yusuke Wada <yusuke@kamawada.com> (https://github.com/yusukebe) | https://github.com/honojs/node-server |
 | @iconify-json/simple-icons | 1.2.84 | CC0-1.0 |  | https://icon-sets.iconify.design/simple-icons/ |
 | @iconify/types | 2.0.0 | MIT | Vjacheslav Trushkin | https://github.com/iconify/iconify |
 | @iconify/utils | 3.1.3 | MIT | Vjacheslav Trushkin | https://iconify.design/docs/libraries/utils/ |
@@ -356,7 +357,7 @@ font assets. An entry in this inventory does not imply endorsement by its author
 | bignumber.js | 9.3.1 | MIT | Michael Mclaughlin | https://github.com/MikeMcl/bignumber.js.git |
 | birpc | 2.9.0 | MIT | Anthony Fu <anthonyfu117@hotmail.com> | https://github.com/antfu-collective/birpc#readme |
 | bmp-ts | 1.0.9 | MIT | Andrew lisowski | https://github.com/hipstersmoothie/bmp-ts |
-| body-parser | 2.3.0 | MIT |  | expressjs/body-parser |
+| body-parser | 2.4.0 | MIT |  | expressjs/body-parser |
 | boolbase | 1.0.0 | ISC | Felix Boehm <me@feedic.com> | https://github.com/fb55/boolbase |
 | brace-expansion | 5.0.12 | MIT |  | git+https://github.com/juliangruber/brace-expansion.git |
 | braces | 3.0.3 | MIT | Jon Schlinkert (https://github.com/jonschlinkert) | https://github.com/micromatch/braces |
@@ -530,8 +531,8 @@ font assets. An entry in this inventory does not imply endorsement by its author
 | fast-sha256 | 1.3.0 | Unlicense | Dmitry Chestnykh | https://github.com/dchest/fast-sha256-js |
 | fast-string-truncated-width | 3.0.3 | MIT |  | github:fabiospampinato/fast-string-truncated-width |
 | fast-string-width | 3.0.2 | MIT |  | github:fabiospampinato/fast-string-width |
-| fast-uri | 3.1.8 | BSD-3-Clause | Vincent Le Goff <vince.legoff@gmail.com> (https://github.com/zekth) | https://github.com/fastify/fast-uri |
-| fast-uri | 4.2.2 | BSD-3-Clause | Vincent Le Goff <vince.legoff@gmail.com> (https://github.com/zekth) | https://github.com/fastify/fast-uri |
+| fast-uri | 3.1.9 | BSD-3-Clause | Vincent Le Goff <vince.legoff@gmail.com> (https://github.com/zekth) | https://github.com/fastify/fast-uri |
+| fast-uri | 4.2.3 | BSD-3-Clause | Vincent Le Goff <vince.legoff@gmail.com> (https://github.com/zekth) | https://github.com/fastify/fast-uri |
 | fast-wrap-ansi | 0.2.2 | MIT | James Garbutt (https://github.com/43081j) | https://github.com/43081j/fast-wrap-ansi#readme |
 | fastify | 5.12.7 | MIT | Matteo Collina <hello@matteocollina.com> | https://fastify.dev/ |
 | fastify-plugin | 5.1.0 | MIT | Tomas Della Vedova - @delvedor (http://delved.org) | https://github.com/fastify/fastify-plugin#readme |
@@ -608,6 +609,7 @@ font assets. An entry in this inventory does not imply endorsement by its author
 | human-signals | 8.0.1 | Apache-2.0 | ehmicky <ehmicky@gmail.com> (https://github.com/ehmicky) | https://www.github.com/ehmicky/human-signals |
 | iconv-lite | 0.6.3 | MIT | Alexander Shtuchkin <ashtuchkin@gmail.com> | https://github.com/ashtuchkin/iconv-lite |
 | iconv-lite | 0.7.2 | MIT | Alexander Shtuchkin <ashtuchkin@gmail.com> | https://github.com/pillarjs/iconv-lite |
+| iconv-lite | 0.7.3 | MIT | Alexander Shtuchkin <ashtuchkin@gmail.com> | https://github.com/pillarjs/iconv-lite |
 | ieee754 | 1.2.1 | BSD-3-Clause | Feross Aboukhadijeh | git://github.com/feross/ieee754.git |
 | ignore | 5.3.2 | MIT | kael | git@github.com:kaelzhang/node-ignore.git |
 | image-q | 4.0.0 | MIT |  | https://github.com/ibezkrovnyi/image-quantization/tree/main/packages/image-q |
@@ -1071,7 +1073,7 @@ font assets. An entry in this inventory does not imply endorsement by its author
 | yocto-spinner | 1.2.1 | MIT | Sindre Sorhus | sindresorhus/yocto-spinner |
 | yoctocolors | 2.1.2 | MIT | Sindre Sorhus | sindresorhus/yoctocolors |
 | zod | 3.25.76 | MIT | Colin McDonnell <zod@colinhacks.com> | https://zod.dev |
-| zod | 4.3.6 | MIT | Colin McDonnell <zod@colinhacks.com> | https://zod.dev |
+| zod | 4.6.7 | MIT | Colin McDonnell <zod@colinhacks.com> | https://zod.dev |
 | zod-to-json-schema | 3.25.2 | ISC | Stefan Terdell | https://github.com/StefanTerdell/zod-to-json-schema |
 | zustand | 5.0.14 | MIT | Paul Henschel | https://github.com/pmndrs/zustand |
 | zwitch | 2.0.4 | MIT | Titus Wormer <tituswormer@gmail.com> (https://wooorm.com) | wooorm/zwitch |
@@ -2391,7 +2393,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
 
 </details>
 
-<details><summary>@hono/node-server@1.19.17 — 35d16fc259cf</summary>
+<details><summary>@hono/node-server@1.19.17, @hono/node-server@2.1.3 — 35d16fc259cf</summary>
 
 <pre>
 MIT License
@@ -4533,7 +4535,7 @@ SOFTWARE.
 
 </details>
 
-<details><summary>body-parser@2.3.0, type-is@2.1.0 — 7cb4d976f1c8</summary>
+<details><summary>body-parser@2.4.0, type-is@2.1.0 — 7cb4d976f1c8</summary>
 
 <pre>
 (The MIT License)
@@ -8130,7 +8132,7 @@ DEALINGS IN THE SOFTWARE.
 
 </details>
 
-<details><summary>fast-uri@3.1.8, fast-uri@4.2.2 — b010b0dfdfdb</summary>
+<details><summary>fast-uri@3.1.9, fast-uri@4.2.3 — b010b0dfdfdb</summary>
 
 <pre>
 Copyright (c) 2011-2021, Gary Court until https://github.com/garycourt/uri-js/commit/a1acf730b4bba3f1097c9f52e7d9d3aba8cdcaae
@@ -10040,7 +10042,7 @@ Apache License
 
 </details>
 
-<details><summary>iconv-lite@0.6.3, iconv-lite@0.7.2 — 48186f5950f2</summary>
+<details><summary>iconv-lite@0.6.3, iconv-lite@0.7.2, iconv-lite@0.7.3 — 48186f5950f2</summary>
 
 <pre>
 Copyright (c) 2011 Alexander Shtuchkin
@@ -21102,7 +21104,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 </details>
 
-<details><summary>zod@3.25.76, zod@4.3.6 — f61cacc2acb8</summary>
+<details><summary>zod@3.25.76, zod@4.6.7 — f61cacc2acb8</summary>
 
 <pre>
 MIT License

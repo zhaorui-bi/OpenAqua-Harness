@@ -1,6 +1,6 @@
 {
   "name": "openaqua-harness",
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "private": true,
   "description": "OpenAqua Harness — an agentic water-treatment research workbench with CLI, Web, and Electron desktop interfaces, built on OpenAqua and the open-source Kimi Code engine",
   "main": "main.js",
@@ -39,11 +39,12 @@
     "typecheck": "pnpm -C engine --filter openaqua-harness typecheck",
     "test": "pnpm -C engine --filter openaqua-harness test:coverage",
     "test:adapter": "node scripts/check-adapter.mjs",
+    "test:desktop-startup": "node scripts/smoke-desktop.mjs --check-startup",
     "check:tui": "node scripts/check-tui.mjs",
     "smoke:mcp": "npm run build:engine && node engine/apps/openaqua-harness/scripts/smoke-mcp.mjs",
     "smoke:web": "node engine/apps/openaqua-harness/scripts/smoke-web.mjs",
     "smoke:desktop": "node scripts/smoke-desktop.mjs",
-    "check": "node --check main.js && node --check scripts/audit-runtime.mjs && node --check scripts/check-adapter.mjs && node --check scripts/check-repository.mjs && node --check scripts/check-tui.mjs && node --check scripts/generate-checksums.mjs && node --check scripts/generate-sbom.mjs && node --check scripts/generate-third-party-notices.mjs && node --check scripts/smoke-desktop.mjs && node --check engine/apps/openaqua-harness/scripts/smoke-web.mjs && npm run lint && npm run typecheck && npm test && npm run test:adapter && npm run check:tui && npm run smoke:mcp && npm run smoke:web && npm run check:licenses && npm run check:repo",
+    "check": "node --check main.js && node --check scripts/audit-runtime.mjs && node --check scripts/check-adapter.mjs && node --check scripts/check-repository.mjs && node --check scripts/check-tui.mjs && node --check scripts/generate-checksums.mjs && node --check scripts/generate-sbom.mjs && node --check scripts/generate-third-party-notices.mjs && node --check scripts/smoke-desktop.mjs && node --check engine/apps/openaqua-harness/scripts/smoke-web.mjs && npm run lint && npm run typecheck && npm test && npm run test:adapter && npm run test:desktop-startup && npm run check:tui && npm run smoke:mcp && npm run smoke:web && npm run check:licenses && npm run check:repo",
     "release:check": "npm run check && npm audit --audit-level=low && npm run audit:runtime",
     "clean:dist": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "prepack": "npm run clean:dist && npm run build:engine",
@@ -83,7 +84,12 @@
       },
       {
         "from": "engine/apps/openaqua-harness/backend",
-        "to": "harness/backend"
+        "to": "harness/backend",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/*.py[cod]"
+        ]
       },
       {
         "from": "engine/apps/openaqua-harness/web-ui",
