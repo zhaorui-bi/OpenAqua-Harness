@@ -50,6 +50,22 @@ MIT 许可的 [Kimi Code](https://github.com/MoonshotAI/kimi-code) 智能体
 > OpenAqua 输出属于早期工程决策支持，不是最终工艺设计、法规合规证明或性能保证。
 > 实施前必须经过专业人员审核、适用法规审查、可处理性试验、中试及场地化工程设计。
 
+## 界面概览
+
+以下为本地 Web UI 的真实截图，桌面端共用同一界面。
+
+![OpenAqua Harness 工作台：左侧工作区与会话，中央为尚未发送的水处理问题示例](./assets/screenshots/workbench.png)
+
+**研究工作台。** 左侧按工作区组织会话，中央通过对话开展研究任务。
+在输入框描述水处理案例，通过加号添加资料附件；**Always Ask** 显示当前审批模式，
+**Set up model** 进入模型配置。图中的含砷地下水问题是**尚未发送的示例输入**。
+
+![自定义模型提供方设置：API 协议、服务地址与模型参数，API 密钥为空](./assets/screenshots/model-provider.png)
+
+**模型配置。** 在 **Settings → Model Providers → Add provider → Custom** 中
+选择 API 协议、服务地址（**Base URL**）和可用模型。图中密钥为空，其余字段显示表单占位符。
+此处配置 Harness 对话模型；OpenAqua 可选的后端模型需独立配置。
+
 ## 环境要求
 
 - Node.js **24.15.0 或更高版本**

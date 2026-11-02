@@ -62,6 +62,26 @@ browser, and desktop interfaces.
 > or a substitute for expert review, treatability testing, pilot testing, and
 > site-specific engineering.
 
+## Interface overview
+
+These screenshots show the local Web UI; the desktop app uses the same interface.
+
+![OpenAqua Harness workbench with a workspace sidebar and an unsent water-treatment query](./assets/screenshots/workbench.png)
+
+**Workbench.** The sidebar organizes workspaces and sessions, while the central
+conversation area supports research tasks. Use the composer to describe a case
+and the add button to attach supporting files. **Always Ask** shows the approval
+mode, and **Set up model** opens model configuration. The arsenic-contaminated
+groundwater question shown here is an **unsent example input**.
+
+![Custom model provider form showing API protocol, endpoint, and model settings with an empty API key field](./assets/screenshots/model-provider.png)
+
+**Model setup.** Open **Settings → Model Providers → Add provider → Custom** to
+choose the API protocol, service address (**Base URL**), and available models.
+The API key field is empty and the form shows placeholders. These settings
+control the Harness conversational model; OpenAqua's optional backend models
+are configured separately.
+
 ## Architecture
 
 ```mermaid
