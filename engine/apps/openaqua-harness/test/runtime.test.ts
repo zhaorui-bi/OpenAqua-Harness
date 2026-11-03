@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import {
   chmodSync,
+  existsSync,
   lstatSync,
   mkdtempSync,
   mkdirSync,
@@ -45,6 +46,7 @@ import {
 } from '../src/openaqua/jobs';
 import { openAquaToolAnnotations, OPENAQUA_TOOLS } from '../src/openaqua/tools';
 import { readEngineeringRunManifest } from '../src/openaqua/provenance';
+import { runResearchCommand } from '../src/openaqua/research-tools';
 
 const tempDirs: string[] = [];
 const harnessVersion = (
@@ -96,6 +98,92 @@ describe('CLI arguments', () => {
         '/tmp/OpenAqua',
       ]),
     ).toThrow(/cannot be used together/);
+  });
+
+  it('parses research JSON actions and direct status or versioned advance controls', () => {
+    expect(parseCliInvocation(['research', 'create', '--input', 'request.json', '--home', 'home'])).toEqual({
+      kind: 'research', action: 'create', inputFile: 'request.json', taskId: undefined,
+      expectedVersion: undefined, homeDir: 'home',
+    });
+    expect(parseCliInvocation(['research', 'advance', '--id', 'research_0123456789abcdef01234567', '--expected-version', '2'])).toEqual({
+      kind: 'research', action: 'advance', inputFile: undefined, taskId: 'research_0123456789abcdef01234567',
+      expectedVersion: 2, homeDir: undefined,
+    });
+    expect(parseCliInvocation(['research', 'list'])).toMatchObject({ kind: 'research', action: 'list' });
+    expect(parseCliInvocation(['research', 'respond', '--help'])).toEqual({ kind: 'help' });
+    for (const args of [
+      ['research'],
+      ['research', 'unknown'],
+      ['research', 'status'],
+      ['research', 'create', '--id', 'research_0123456789abcdef01234567'],
+      ['research', 'advance', '--id', 'research_0123456789abcdef01234567', '--input', 'request.json'],
+      ['research', 'status', '--id', 'research_0123456789abcdef01234567', '--expected-version', '2'],
+      ['research', 'advance', '--id', 'research_0123456789abcdef01234567', '--expected-version', '0'],
+      ['research', 'advance', '--id', 'research_0123456789abcdef01234567', '--expected-version', '1.5'],
+    ]) {
+      expect(() => parseCliInvocation(args)).toThrow(CliArgumentError);
+    }
+  });
+});
+
+describe('research CLI command boundary', () => {
+  it('uses bounded JSON and shared schemas without creating research on malformed input', async () => {
+    const root = makeTempDir();
+    const ctx = { jobsRoot: path.join(root, 'jobs'), env: { OPENAQUA_WORKDIR: root } };
+    const inputFile = path.join(root, 'request.json');
+    for (const content of ['[]', 'null', '{', ' '.repeat(65_537)]) {
+      writeFileSync(inputFile, content);
+      expect((await runResearchCommand('list', { inputFile }, ctx)).isError).toBe(true);
+    }
+    writeFileSync(inputFile, JSON.stringify({ limit: 101 }));
+    expect((await runResearchCommand('list', { inputFile }, ctx)).isError).toBe(true);
+    writeFileSync(inputFile, JSON.stringify({ humanApproved: true }));
+    expect((await runResearchCommand('list', { inputFile }, ctx)).isError).toBe(true);
+    if (process.platform !== 'win32') {
+      const link = path.join(root, 'linked-request.json');
+      writeFileSync(inputFile, '{}');
+      symlinkSync(inputFile, link);
+      expect((await runResearchCommand('list', { inputFile: link }, ctx)).isError).toBe(true);
+    }
+    expect((await runResearchCommand('list', { inputFile: root }, ctx)).isError).toBe(true);
+    expect((await runResearchCommand('advance', { inputFile, taskId: 'research_0123456789abcdef01234567' }, ctx)).isError).toBe(true);
+    expect(existsSync(ctx.jobsRoot)).toBe(false);
+    const empty = await runResearchCommand('list', {}, ctx);
+    expect(empty.isError).toBeUndefined();
+    expect(JSON.parse(empty.content[0]?.text ?? '')).toEqual({ tasks: [], returned: 0 });
+    expect(existsSync(ctx.jobsRoot)).toBe(false);
+  });
+
+  it('shares creation, recovery, request conflicts and read-only listing across CLI and MCP handlers', async () => {
+    const root = makeTempDir();
+    const ctx = { jobsRoot: path.join(root, 'jobs'), env: { OPENAQUA_WORKDIR: root } };
+    const queryFile = path.join(root, 'case.json');
+    const inputFile = path.join(root, 'request.json');
+    writeFileSync(queryFile, JSON.stringify({ source_water: 'groundwater', contaminants: ['arsenic'] }));
+    const request = { requestId: 'runtime-research-case', objective: 'Screen arsenic treatment options', queryFile };
+    writeFileSync(inputFile, JSON.stringify(request));
+    const createdResult = await runResearchCommand('create', { inputFile }, ctx);
+    expect(createdResult.isError).toBeUndefined();
+    const created = JSON.parse(createdResult.content[0]?.text ?? '') as { id: string; version: number; assignments: unknown[] };
+    expect(created).toMatchObject({ id: expect.stringMatching(/^research_[a-f0-9]{24}$/), version: 1, assignments: [] });
+    const statusTool = OPENAQUA_TOOLS.find((tool) => tool.name === 'openaqua_research_status');
+    if (statusTool === undefined) throw new Error('research status tool is missing');
+    const status = await statusTool.run({ taskId: created.id }, ctx);
+    expect(JSON.parse(status.content[0]?.text ?? '')).toMatchObject({ id: created.id, version: created.version, assignments: [] });
+    const list = await runResearchCommand('list', {}, ctx);
+    expect(JSON.parse(list.content[0]?.text ?? '')).toMatchObject({ returned: 1, tasks: [{ id: created.id }] });
+    const summary = (JSON.parse(list.content[0]?.text ?? '') as { tasks: Record<string, unknown>[] }).tasks[0];
+    expect(summary).toMatchObject({ jobsUsed: 0, maxJobs: 4, openAttention: [], objectiveTruncated: false });
+    expect(summary).not.toHaveProperty('events');
+    expect(summary).not.toHaveProperty('queryRevisions');
+    expect(listJobs(ctx.jobsRoot)).toEqual([]);
+    const duplicate = await runResearchCommand('create', { inputFile }, ctx);
+    expect(JSON.parse(duplicate.content[0]?.text ?? '')).toMatchObject({ id: created.id, version: created.version });
+    writeFileSync(inputFile, JSON.stringify({ ...request, objective: 'A different study' }));
+    expect((await runResearchCommand('create', { inputFile }, ctx)).isError).toBe(true);
+    writeFileSync(inputFile, JSON.stringify({ ...request, maxJobs: 17 }));
+    expect((await runResearchCommand('create', { inputFile }, ctx)).isError).toBe(true);
+    expect(listJobs(ctx.jobsRoot)).toEqual([]);
   });
 });
 
@@ -366,8 +454,8 @@ describe('MCP configuration persistence', () => {
 
 describe('OpenAqua tool catalog', () => {
   it('publishes bounded water-treatment schemas and MCP safety annotations', () => {
-    expect(OPENAQUA_TOOLS).toHaveLength(18);
-    expect(new Set(OPENAQUA_TOOLS.map((tool) => tool.name)).size).toBe(18);
+    expect(OPENAQUA_TOOLS).toHaveLength(24);
+    expect(new Set(OPENAQUA_TOOLS.map((tool) => tool.name)).size).toBe(24);
 
     const assess = OPENAQUA_TOOLS.find((tool) => tool.name === 'openaqua_assess_case');
     const audit = OPENAQUA_TOOLS.find((tool) => tool.name === 'openaqua_audit_report');
@@ -405,6 +493,20 @@ describe('OpenAqua tool catalog', () => {
     expect(openAquaToolAnnotations('openaqua_job_manifest').readOnlyHint).toBe(true);
     expect(openAquaToolAnnotations('openaqua_job_cancel').destructiveHint).toBe(true);
     expect(openAquaToolAnnotations('openaqua_recommend').idempotentHint).toBe(false);
+    expect(openAquaToolAnnotations('openaqua_research_status')).toMatchObject({
+      readOnlyHint: true,
+      idempotentHint: true,
+      openWorldHint: false,
+    });
+    expect(openAquaToolAnnotations('openaqua_research_list').readOnlyHint).toBe(true);
+    expect(assess?.strictInput).toBeUndefined();
+    expect(OPENAQUA_TOOLS.filter((tool) => tool.name.startsWith('openaqua_research_'))).toHaveLength(6);
+    for (const tool of OPENAQUA_TOOLS.filter((item) => item.name.startsWith('openaqua_research_'))) {
+      expect(tool.strictInput).toBe(true);
+    }
+    for (const name of ['create', 'advance', 'respond', 'cancel']) {
+      expect(openAquaToolAnnotations(`openaqua_research_${name}`).readOnlyHint).toBe(false);
+    }
   });
 
   it('fails input preflight before launching a job with a missing query file', async () => {

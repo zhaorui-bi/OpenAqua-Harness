@@ -6,6 +6,19 @@ versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Durable water-treatment research tasks that preserve a case across assessment,
+  evidence retrieval, recommendation, and report audit, with structured
+  attention items, input revisions, bounded job budgets, and recovery.
+- Six research-task MCP tools and a model-independent `openaqua research`
+  command for creating, observing, advancing, updating, and cancelling work.
+
+### Changed
+
+- CLI, Web, and desktop agent guidance now prefers durable research tasks for
+  complete case-to-report requests; individual operation tools remain available.
+
 ### Repository maintenance
 
 - Keep one project license at the repository root and collect upstream notices

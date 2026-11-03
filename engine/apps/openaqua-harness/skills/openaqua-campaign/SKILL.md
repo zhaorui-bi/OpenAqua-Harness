@@ -9,6 +9,22 @@ Use this skill when the unit of work is a study rather than one tool call.
 OpenAqua tools execute the pipeline and evaluators; ordinary workspace tools
 maintain the study manifest, prediction files, and summary tables.
 
+For each complete case-to-report branch, prefer the `openaqua_research_*`
+controller from the `openaqua` skill. Create a task with a stable request ID,
+declared objective and frozen query file, then advance it through readiness,
+case assessment, retrieval, recommendation, and audit. Record its task ID,
+query revision, attention outcomes and assignment job IDs in the campaign
+manifest. Existing independent tools remain appropriate for benchmark metrics,
+retrieval-only experiments, and explicitly declared manual comparisons.
+
+The task controller does not execute a whole comparison matrix or evaluate a
+benchmark automatically. Keep the campaign's declared matrix and global budget
+in addition to each task's default four-job budget (maximum 16, including
+retries/reassessments). Do not create replacement tasks to conceal failed gates
+or bypass exhausted budgets. A caller-declared attention response is not
+verified human approval, and audit warnings/failures cannot be promoted to a
+ready handoff.
+
 ## 1. Freeze the question
 
 Before execution, record:
@@ -56,6 +72,7 @@ For each execution preserve:
 - input file path/hash or inline query hash;
 - backend revision, dataset/index identity, model settings, and prompt branch;
 - tool name, job ID, request SHA-256, command arguments, output path, and captured result SHA-256;
+- research task ID, task version, query revision, attention items and declared responses when the task controller is used;
 - timestamps, lifecycle status, failure category, and retry relationship;
 - complete predictions, required metrics, and explicit missing values;
 - constraint violations, auto-revisions, evidence IDs, assumptions, and
@@ -122,6 +139,12 @@ and retain the upstream dataset identity even when it is complete.
 ## 6. Observe without flooding context
 
 Use `openaqua_job_list` and `openaqua_job_status` to recover and monitor work.
+For task-controlled branches, use `openaqua_research_list` and
+`openaqua_research_status` for read-only recovery, and
+`openaqua_research_advance` to reconcile an existing assignment before moving
+on. `status` does not advance it. A running or unknown job is not a reason to
+start another copy. Preserve structured attention and the controller's
+`scientificOutcome`; successful execution is separate from scientific readiness.
 At every decision point preserve `openaqua_job_manifest` and its
 `requestSha256`. Use bounded log views:
 

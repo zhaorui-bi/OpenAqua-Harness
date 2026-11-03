@@ -3,6 +3,7 @@ import process from 'node:process';
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { z } from 'zod';
 
 import { packageVersion, resolveOpenAquaHome, resolveUserPath } from '../paths';
 import {
@@ -28,12 +29,13 @@ const server = new McpServer({
 });
 
 for (const tool of OPENAQUA_TOOLS) {
-  server.registerTool(
+  const inputSchema = tool.strictInput === true ? z.object(tool.inputSchema).strict() : tool.inputSchema;
+  server.registerTool<Record<string, z.ZodType>, typeof inputSchema>(
     tool.name,
     {
       title: tool.title,
       description: tool.description,
-      inputSchema: tool.inputSchema,
+      inputSchema,
       annotations: openAquaToolAnnotations(tool.name),
     },
     async (args) => tool.run(args as Record<string, unknown>, ctx),

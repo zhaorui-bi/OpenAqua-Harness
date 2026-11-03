@@ -4,7 +4,7 @@ OpenAqua Harness combines four layers:
 
 1. a branded CLI/TUI/Web/Electron product;
 2. the vendored Kimi Code agent engine;
-3. an MCP tool and durable-job layer;
+3. an MCP research-task controller and durable-job layer;
 4. a bundled Python adapter over an external OpenAqua checkout.
 
 ## Runtime topology
@@ -27,7 +27,9 @@ flowchart TB
     HARNESS --> AGENT[Kimi Code SDK]
     HARNESS --> MCP[MCP stdio server]
     MCP --> TOOLS[Zod-validated OpenAqua tools]
-    TOOLS --> JOBS[Durable job store / runner]
+    TOOLS --> RESEARCH[Gated research-task controller]
+    RESEARCH --> JOBS[Durable job store / runner]
+    TOOLS --> JOBS
     TOOLS --> ADAPTER[openaqua_cli.py]
     JOBS --> ADAPTER
     ADAPTER --> REPO[External OpenAqua checkout]
@@ -37,7 +39,8 @@ flowchart TB
 
 CLI sessions attach the MCP server directly to the SDK session. Web and desktop
 sessions register it in `<home>/mcp.json`, allowing kap-server sessions to load
-the same tool surface.
+the same 24-tool surface. Six research-task tools add a persistent controller
+over the original 18 independent operations.
 
 ## Python adapter boundary
 
@@ -88,6 +91,27 @@ Longer or output-producing operations run as durable jobs:
 `src/openaqua/tools.ts` defines Zod schemas, maps camelCase MCP input to the
 adapter’s snake_case JSON, resolves workspace-relative paths, performs input
 preflight, and assigns MCP safety annotations.
+
+## Research-task lifecycle
+
+`src/openaqua/research.ts` owns a persistent case-to-report work item, separately
+from the individual job attempts in `jobs.ts`. `research-tools.ts` validates the
+six MCP operations and shares their schemas with the JSON-oriented
+`openaqua research` CLI. Task status/list reads never dispatch work.
+
+The controller freezes query revisions and declared scope, records structured
+attention and events, checks optimistic versions under a task lock, and links
+readiness, assessment, retrieval, recommendation, audit, and handoff stages.
+Advancement reconciles existing durable jobs before dispatching further work.
+The default backend-job budget is four, including retries and reassessments,
+with a maximum of 16. Critical case gaps and audit `fail`/`warn` outcomes cannot
+be promoted to a ready handoff by a caller-declared response.
+
+These gates apply to the research controller; direct independent tools retain
+their existing behavior. Scope declarations and responses are not authenticated
+human approvals. No external Source listener, automatic knowledge/index update,
+or outbound message channel is introduced. See [research tasks](./RESEARCH_TASKS.md)
+for the full contract and mapping to the referenced prototype.
 
 ## Durable job lifecycle
 

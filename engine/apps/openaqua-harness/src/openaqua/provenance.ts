@@ -286,6 +286,7 @@ function collectInputReferences(
   };
 
   switch (toolName) {
+    case 'openaqua_assess_case':
     case 'openaqua_recommend':
     case 'openaqua_retrieve_evidence':
       add('query', 'queryFile');

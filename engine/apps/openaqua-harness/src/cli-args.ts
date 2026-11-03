@@ -11,6 +11,9 @@ export const PROVIDER_TYPES = [
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number];
 
+export const RESEARCH_ACTIONS = ['create', 'status', 'list', 'advance', 'respond', 'cancel'] as const;
+export type ResearchAction = (typeof RESEARCH_ACTIONS)[number];
+
 export type CliInvocation =
   | { readonly kind: 'tui' }
   | { readonly kind: 'help' }
@@ -45,6 +48,14 @@ export type CliInvocation =
       readonly providerType?: ProviderType;
     }
   | { readonly kind: 'tools'; readonly json: boolean; readonly homeDir?: string }
+  | {
+      readonly kind: 'research';
+      readonly action: ResearchAction;
+      readonly inputFile?: string;
+      readonly taskId?: string;
+      readonly expectedVersion?: number;
+      readonly homeDir?: string;
+    }
   | { readonly kind: 'info'; readonly homeDir?: string };
 
 export class CliArgumentError extends Error {
@@ -176,6 +187,47 @@ export function parseCliInvocation(argv: readonly string[]): CliInvocation {
         homeDir: optionalNonEmptyString(parsed.values['home'], '--home'),
       };
     }
+    case 'research': {
+      const [action, ...actionArgs] = args;
+      if (action === '--help' || action === '-h') {
+        assertNoArguments(actionArgs, 'research --help');
+        return { kind: 'help' };
+      }
+      if (!RESEARCH_ACTIONS.some((value) => value === action)) {
+        throw new CliArgumentError(`research requires an action: ${RESEARCH_ACTIONS.join(', ')}`);
+      }
+      const parsed = parseCommandArgs(actionArgs, {
+        help: HELP_OPTION,
+        input: { type: 'string' },
+        id: { type: 'string' },
+        'expected-version': { type: 'string' },
+        home: { type: 'string' },
+      });
+      if (parsed.values['help'] === true) return { kind: 'help' };
+      const inputFile = optionalNonEmptyString(parsed.values['input'], '--input');
+      const taskId = optionalNonEmptyString(parsed.values['id'], '--id');
+      const expectedVersion = optionalVersion(parsed.values['expected-version']);
+      if (inputFile !== undefined && (taskId !== undefined || expectedVersion !== undefined)) {
+        throw new CliArgumentError('Use --input or --id/--expected-version, not both');
+      }
+      if (taskId !== undefined && action !== 'status' && action !== 'advance') {
+        throw new CliArgumentError('--id is supported only for research status and advance');
+      }
+      if (expectedVersion !== undefined && action !== 'advance') {
+        throw new CliArgumentError('--expected-version is supported only for research advance');
+      }
+      if (inputFile === undefined && action !== 'list' && taskId === undefined) {
+        throw new CliArgumentError(`research ${String(action)} requires --input FILE${action === 'status' || action === 'advance' ? ' or --id ID' : ''}`);
+      }
+      return {
+        kind: 'research',
+        action: action as ResearchAction,
+        inputFile,
+        taskId,
+        expectedVersion,
+        homeDir: optionalNonEmptyString(parsed.values['home'], '--home'),
+      };
+    }
     case 'info': {
       const parsed = parseCommandArgs(args, {
         help: HELP_OPTION,
@@ -252,4 +304,13 @@ function optionalProviderType(value: string | boolean | undefined): ProviderType
     );
   }
   return raw as ProviderType;
+}
+
+function optionalVersion(value: string | boolean | undefined): number | undefined {
+  const raw = optionalNonEmptyString(value, '--expected-version');
+  if (raw === undefined) return undefined;
+  if (!/^\d+$/.test(raw) || !Number.isSafeInteger(Number(raw)) || Number(raw) < 1) {
+    throw new CliArgumentError('--expected-version must be a positive safe integer');
+  }
+  return Number(raw);
 }

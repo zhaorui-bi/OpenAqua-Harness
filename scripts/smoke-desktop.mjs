@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { EventEmitter } from 'node:events';
@@ -110,8 +110,28 @@ try {
       `packaged application exited with code ${String(result.code)} and signal ${String(result.signal)}`,
     );
   }
+  const research = spawnSync(
+    executable,
+    [
+      path.join(root, 'engine/apps/openaqua-harness/scripts/smoke-research.mjs'),
+      path.join(resources, 'harness/dist/cli.mjs'),
+    ],
+    {
+      cwd: root,
+      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: 120_000,
+      maxBuffer: 4_000_000,
+    },
+  );
+  if (research.error !== undefined || research.status !== 0) {
+    throw new Error(
+      `Packaged research workflow failed: ${research.error?.message ?? redact(`${research.stdout ?? ''}\n${research.stderr ?? ''}`).slice(-12_000)}`,
+    );
+  }
   process.stdout.write(
-    `Desktop smoke: packaged application and resources verified (${path.relative(root, executable)})\n`,
+    `Desktop smoke: packaged application, resources, and four-stage research workflow verified (${path.relative(root, executable)})\n`,
   );
 } catch (error) {
   clearTimeout(timeout);

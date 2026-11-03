@@ -16,6 +16,7 @@ import {
   resolveOpenAquaHome,
 } from './harness';
 import { runOnboard } from './onboard';
+import { runResearchCommand } from './openaqua/research-tools';
 import {
   defaultWebAssetsDir,
   findPackageRoot,
@@ -50,6 +51,13 @@ Usage:
   openaqua tools [--json]        list OpenAqua query, retrieval, design, evaluation,
                                   and durable-job tools exposed to the agent
                   [--home DIR]
+  openaqua research <action>     control a durable case-to-report research task;
+                                  actions: create, status, list, advance, respond, cancel
+                                  [--input FILE] [--home DIR]
+                                  status/advance: --id ID instead of --input
+                                  advance: [--expected-version N]
+                                  JSON input uses the matching research MCP schema;
+                                  no conversational model is needed for task control
   openaqua info [--home DIR]     version + paths
   openaqua --version             print version
   openaqua <command> --help      print this help
@@ -128,6 +136,22 @@ async function main(argv: readonly string[]): Promise<void> {
     case 'tools':
       runToolsList(invocation.json, invocation.homeDir);
       return;
+    case 'research': {
+      const env = invocation.homeDir === undefined
+        ? process.env
+        : { ...process.env, OPENAQUA_HOME: invocation.homeDir };
+      const homeDir = resolveOpenAquaHome(env);
+      const workDir = resolveUserPath(env['OPENAQUA_WORKDIR'] ?? process.cwd());
+      const jobsRoot = resolveUserPath(env['OPENAQUA_JOBS_DIR'] ?? path.join(workDir, 'openaqua-jobs'));
+      const result = await runResearchCommand(invocation.action, {
+        inputFile: invocation.inputFile,
+        taskId: invocation.taskId,
+        expectedVersion: invocation.expectedVersion,
+      }, { homeDir, jobsRoot, env });
+      for (const item of result.content) process.stdout.write(`${item.text}\n`);
+      if (result.isError === true) process.exitCode = 1;
+      return;
+    }
     case 'info': {
       const env =
         invocation.homeDir === undefined

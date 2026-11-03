@@ -131,6 +131,7 @@ export function startJob(
     readonly env?: NodeJS.ProcessEnv;
     readonly label?: string;
     readonly provenance?: EngineeringJobRequest;
+    readonly jobId?: string;
   },
 ): JobSnapshot {
   if (command.length === 0 || !command.every((part) => part !== '')) {
@@ -140,7 +141,8 @@ export function startJob(
     throw new Error(`Job working directory does not exist or is not a directory: ${options.workDir}`);
   }
 
-  const id = jobId();
+  const id = options.jobId ?? jobId();
+  if (!JOB_ID_PATTERN.test(id)) throw new Error('Invalid preallocated OpenAqua job id');
   const root = path.resolve(jobsRoot);
   const dir = path.join(root, id);
   mkdirSync(root, { recursive: true, mode: 0o700 });

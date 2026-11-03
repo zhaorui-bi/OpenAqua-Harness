@@ -40,7 +40,8 @@ MIT 许可的 [Kimi Code](https://github.com/MoonshotAI/kimi-code) 智能体
 | 能力 | 说明 |
 | --- | --- |
 | **五智能体流水线** | 查询归一化、混合检索、受控分类体系内的工艺规划、规则审查与证据绑定解释。 |
-| **18 个 MCP 工具** | 覆盖运行状态、科学案例完备性评估、推荐报告审计、分类目录、推荐、检索、约束检查、索引、知识暂存、WContBench 评测与任务管理。 |
+| **24 个 MCP 工具** | 覆盖分阶段研究任务、运行状态、科学案例完备性评估、推荐报告审计、分类目录、推荐、检索、约束检查、索引、知识暂存、WContBench 评测与作业管理。 |
+| **持久化研究任务** | 保存案例修订、声明范围、结构化待补信息和作业预算，支持案例评估 → 证据 → 推荐 → 审计流程的跨会话恢复。 |
 | **多种界面** | 完整 TUI、一次性 CLI、轻量 REPL、本地 Web UI 和 Electron 桌面端。 |
 | **持久化工程任务** | 长任务在会话退出后仍可恢复，并记录状态、日志、输出、输入哈希、JSON 载荷哈希与请求指纹。 |
 | **双模型层** | Harness 对话智能体使用 API 提供方；OpenAqua 后端可选使用 `OPENROUTER_API_KEY`。 |
@@ -177,6 +178,18 @@ Windows 用户请使用 `npm run cli -- <命令>` 代替 `./bin/openaqua`。
 计量基准；铅目标、砷价态和设计流量通过兼容的 `extra` 字段保留。
 详见[水处理领域工作流与合成案例](./docs/zh-CN/DOMAIN_WORKFLOW.md)。
 
+## 持久化案例研究
+
+完整的案例到报告请求优先使用六个 `openaqua_research_*` 工具或
+`openaqua research`。任务冻结案例输入，为各阶段关联后台作业，并把缺失信息
+整理成结构化待办。`advance` 先核对已有作业再推进；案例关键缺项以及报告审计
+的警告或失败都会阻止进入可交付状态。默认预算为四个后台作业（含重试），上限为 16。
+
+任务控制直接返回 JSON，不需要启动 Harness 对话模型；实际执行仍依赖 OpenAqua
+后端及其可选模型。原有 18 个工具继续支持独立操作，新门禁只作用于研究任务流程。
+调用方声明的回应不等于经过身份验证的人工签批。
+详见[完整示例、CLI 合同和参考设计映射](./docs/RESEARCH_TASKS.md)。
+
 ## CLI 命令
 
 | 命令 | 用途 |
@@ -188,6 +201,7 @@ Windows 用户请使用 `npm run cli -- <命令>` 代替 `./bin/openaqua`。
 | `openaqua onboard [选项]` | 配置主目录、模型、后端、MCP 与技能。 |
 | `openaqua doctor [--json] [--probe]` | 检查运行时、存储、模型、资源、MCP、技能与 OpenAqua 健康状态。 |
 | `openaqua tools [--json]` | 列出工具、参数和安全注解。 |
+| `openaqua research <action> [--input FILE]` | 创建、查看、列出、推进、回应或取消研究任务；status/advance 也支持 `--id ID`。 |
 | `openaqua info` | 输出版本及解析后的路径。 |
 
 常用 onboarding 参数包括 `--openaqua-repo DIR`、
@@ -211,6 +225,12 @@ Windows 用户请使用 `npm run cli -- <命令>` 代替 `./bin/openaqua`。
 | `openaqua_evaluate_retrieval` | 运行 WContBench 检索指标。 |
 | `openaqua_audit_report` | 构建结构化“主张—证据”账本，并识别证据结构缺失、约束失败及部分定量主张风险。 |
 | `openaqua_job_*` | 恢复任务、读取状态/清单/日志/产物或取消任务。 |
+| `openaqua_research_create` | 冻结案例输入和研究目标；同一请求重复创建保持幂等。 |
+| `openaqua_research_status` | 读取研究状态、待办、阶段作业和下一步操作。 |
+| `openaqua_research_list` | 恢复近期研究任务，查询不会自动推进。 |
+| `openaqua_research_advance` | 核对已有作业，在预算和科学门禁允许时推进。 |
+| `openaqua_research_respond` | 按版本记录调用方声明的案例修订、有条件筛选或可重试失败的恢复请求。 |
+| `openaqua_research_cancel` | 取消研究任务及活动作业，保留历史记录。 |
 
 ## 后端解析
 

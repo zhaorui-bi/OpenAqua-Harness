@@ -50,7 +50,8 @@ browser, and desktop interfaces.
 | Capability | What it provides |
 | --- | --- |
 | **Five-agent workflow** | Query normalization, hybrid evidence retrieval, taxonomy-constrained planning, rule-based critique, and evidence-bound explanations. |
-| **Focused MCP surface** | 18 tools for runtime readiness, scientific case assessment, recommendation auditing, taxonomy, recommendation, retrieval, constraint checking, indexing, knowledge staging, WContBench evaluation, and durable job control. |
+| **Focused MCP surface** | 24 tools for gated research tasks, runtime readiness, scientific case assessment, recommendation auditing, taxonomy, recommendation, retrieval, constraint checking, indexing, knowledge staging, WContBench evaluation, and durable job control. |
+| **Persistent research tasks** | Frozen case revisions, declared scope, structured information needs, bounded job budgets, and recoverable case → evidence → recommendation → audit stages. |
 | **Three user interfaces** | Full terminal UI, lightweight CLI/REPL, local browser UI, and an Electron desktop shell backed by the same harness. |
 | **Durable engineering jobs** | Long operations survive session closure and expose lifecycle state, bounded logs, output metadata, input hashes, payload hashes, and request fingerprints. |
 | **Two model layers** | API-provider setup for the conversational agent, plus optional `OPENROUTER_API_KEY` support for OpenAqua’s parser/planner/explainer agents. |
@@ -245,6 +246,21 @@ as N), and retain lead endpoints, arsenic speciation, and design flow through
 compatible `extra` fields. See the
 [domain workflow and synthetic cases (简体中文)](./docs/zh-CN/DOMAIN_WORKFLOW.md).
 
+## Persistent case-to-report research
+
+Use the six `openaqua_research_*` tools, or `openaqua research`, for a complete
+case-to-report request. A task freezes the case, links each stage to a durable
+job, and returns missing information as structured attention items. `advance`
+reconciles the existing job before moving forward; critical case gaps and report
+audit warnings/failures prevent a ready handoff. The default budget is four
+backend jobs, including retries, with a maximum of 16.
+
+Task control returns JSON without opening a conversational-model session;
+backend execution uses the configured OpenAqua runtime and optional models.
+The original 18 tools remain available for individual operations. These new
+gates apply to research tasks, and caller-declared responses are not verified
+human approval. See [the runnable workflow, CLI contract, and design reference](./docs/RESEARCH_TASKS.md).
+
 ## CLI reference
 
 | Command | Purpose |
@@ -256,6 +272,7 @@ compatible `extra` fields. See the
 | `openaqua onboard [options]` | Configure home, model provider, backend, MCP, and skills. |
 | `openaqua doctor [--json] [--probe]` | Validate runtime, storage, model, assets, MCP, skills, and OpenAqua health. |
 | `openaqua tools [--json]` | List tools, parameters, backend resolution, and safety annotations. |
+| `openaqua research <action> [--input FILE]` | Create, inspect, list, advance, respond to, or cancel a persistent research task; status/advance also accept `--id ID`. |
 | `openaqua info` | Print version and resolved runtime paths. |
 
 Useful onboarding flags include `--openaqua-repo DIR`,
@@ -284,6 +301,12 @@ Useful onboarding flags include `--openaqua-repo DIR`,
 | `openaqua_job_log` | Read bounded raw/error/event excerpts with cursor pagination. |
 | `openaqua_job_artifacts` | List output metadata without following symbolic links. |
 | `openaqua_job_cancel` | Cancel a process tree with bounded graceful escalation. |
+| `openaqua_research_create` | Freeze a case and declared objective into an idempotent research request. |
+| `openaqua_research_status` | Read persisted state, attention items, assignments, and next action. |
+| `openaqua_research_list` | Recover recent research tasks without advancing them. |
+| `openaqua_research_advance` | Reconcile the current job and advance through scientific gates within budget. |
+| `openaqua_research_respond` | Record a version-checked, caller-declared amendment, conditional-screening decision, or eligible retry. |
+| `openaqua_research_cancel` | Cancel a task and its active job while retaining its history. |
 
 ## Backend resolution
 

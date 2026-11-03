@@ -24,6 +24,13 @@ readiness → query smoke → end-to-end smoke → bounded pilot → approved st
 A successful adapter probe is not data readiness. A successful index command
 that produces zero chunks is not a successful retrieval setup.
 
+For a complete single-case workflow, use a [durable research task](./RESEARCH_TASKS.md).
+It persists the case, stage assignments, information needs, and scientific
+outcome across sessions. The research runner enforces its case and report
+gates; the individual operation tools remain available for bounded manual
+work. A task marked `ready` is ready for research handoff, not for construction
+or a claim of regulatory compliance.
+
 ## Query integrity
 
 Record source-water context, measurements, units, contaminants, treatment

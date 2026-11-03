@@ -1,6 +1,6 @@
 ---
 name: openaqua
-description: Run a focused OpenAqua water-treatment operation: inspect runtime readiness, browse the taxonomy, normalize or assess a source-water case, retrieve evidence, recommend treatment trains, check constraints, build indexes, stage knowledge, evaluate predictions, or inspect durable jobs. Use for one query or one bounded operation. For benchmark suites or repeated comparisons, use openaqua-campaign.
+description: Create or resume a persistent, gated water-treatment case-to-report research task, or run one independent OpenAqua operation such as readiness, taxonomy, normalization, evidence retrieval, recommendation, constraint checking, report auditing, indexing, evaluation, or durable-job inspection. For benchmark suites or repeated comparisons, use openaqua-campaign.
 ---
 
 # OpenAqua water-treatment operations
@@ -75,7 +75,45 @@ before interpreting them as constraints the upstream planner or critic used.
 
 ## Case-to-report workflow
 
-For a treatment-design request:
+For a complete treatment-design request, prefer the persistent research
+controller. Use the original tools below for an independent operation or an
+explicitly requested manual workflow; their direct calls do not acquire the
+research controller's gates.
+
+1. Save the declared case as an upstream snake_case query JSON in the workspace.
+   Preserve measurements, reporting bases, targets, and unknowns; never fill a
+   gap to pass a gate.
+2. Call `openaqua_research_create` with `queryFile`, a concrete `objective`, and
+   a stable `requestId`. The default job budget is four, including retries and
+   reassessments; the maximum is 16. Creation freezes the input without starting
+   a job. Reuse the request ID only for the same request, and preserve the
+   returned task ID.
+3. Call `openaqua_research_advance` with that task ID and its latest `version`
+   as `expectedVersion`. The controller checks readiness and case information,
+   then links evidence retrieval, recommendation, and structural audit to
+   durable assignments. Repeat advancement at a later decision point to
+   reconcile an existing job; do not relaunch its stage manually.
+4. When the task waits, read the open `attention` items, their `allowedActions`,
+   and `nextAction`. Surface the concrete information need or recovery action.
+   `openaqua_research_respond` names the attention ID and current version:
+   `amend_query` records a new file revision, `continue_screening` permits only
+   eligible conditional screening, and `retry` is limited to eligible failures
+   within budget. Critical case blockers cannot be waived. A response records
+   a caller declaration; do not invent a person's answer or present it as
+   authenticated human approval.
+5. Read-only recovery uses `openaqua_research_list` and
+   `openaqua_research_status`; these do not start work. A running or unknown job
+   must be investigated, not automatically replaced. Use the existing bounded
+   job-log and manifest tools for its assignment.
+6. Return the task/job identifiers, next action, retained artifacts, limitations,
+   and scientific outcome. Audit `warn` or `fail` prevents `ready` even when its
+   job exited successfully. A ready task supports research handoff, not final
+   engineering approval. Use `openaqua_research_cancel` only for a requested
+   cancellation; cancelled tasks do not resume on advancement.
+
+The controller does not rebuild indexes, ingest knowledge, send external
+messages, or run benchmark campaigns automatically. Its scope declaration is
+not a security sandbox. For individual operations:
 
 1. Establish runtime/data readiness and controlled contaminant names.
 2. Call `openaqua_assess_case`. Report critical blockers and bundle the most
@@ -102,6 +140,11 @@ of the implemented checks only.
 
 ## Choosing the right tool
 
+- `openaqua_research_create`, `openaqua_research_status`,
+  `openaqua_research_list`, `openaqua_research_advance`,
+  `openaqua_research_respond`, `openaqua_research_cancel` — manage a persistent
+  case-to-report workflow with version checks, information gates, job budgets,
+  and separate execution/scientific outcomes.
 - `openaqua_status` — inspect the checkout, Python runtime, dependencies,
   knowledge assets, indexes, and optional OpenRouter setup.
 - `openaqua_catalog` — browse/search canonical contaminants and treatment units.
@@ -136,7 +179,8 @@ Use four explicit gates:
    are available.
 2. **Normalization and case assessment** — one representative query maps to the
    expected source, contaminant taxonomy, targets, and constraints; critical
-   information gaps are resolved or explicitly accepted before recommendation.
+   information gaps are resolved before recommendation, and eligible remaining
+   gaps are recorded as conditional screening limitations.
 3. **Smoke case** — one complete recommendation or retrieval run produces a
    readable result and traceable evidence.
 4. **Evaluation/campaign** — only after the smoke case, run a declared benchmark

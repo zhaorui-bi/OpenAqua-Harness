@@ -27,6 +27,7 @@ import {
   type JobStatus,
 } from './jobs';
 import { createEngineeringJobRequest } from './provenance';
+import { RESEARCH_TOOLS } from './research-tools';
 
 export interface ToolContext {
   readonly homeDir?: string;
@@ -45,6 +46,7 @@ export interface OpenAquaTool {
   readonly title: string;
   readonly description: string;
   readonly inputSchema: Record<string, z.ZodType>;
+  readonly strictInput?: boolean;
   run(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult>;
 }
 
@@ -63,6 +65,8 @@ const READ_ONLY_IDEMPOTENT = new Set([
   'openaqua_job_manifest',
   'openaqua_job_log',
   'openaqua_job_artifacts',
+  'openaqua_research_status',
+  'openaqua_research_list',
 ]);
 const READ_ONLY_OPEN_WORLD = new Set([
   'openaqua_normalize_query',
@@ -84,6 +88,9 @@ export function openAquaToolAnnotations(name: string): OpenAquaToolAnnotations {
     return { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true };
   }
   if (name === 'openaqua_job_cancel') {
+    return { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false };
+  }
+  if (name === 'openaqua_research_create' || name === 'openaqua_research_cancel') {
     return { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false };
   }
   if (IDEMPOTENT_WRITES.has(name)) {
@@ -869,6 +876,7 @@ export const OPENAQUA_TOOLS: readonly OpenAquaTool[] = [
       }
     },
   },
+  ...RESEARCH_TOOLS,
 ];
 
 const SCIENTIFIC_ENVIRONMENT_KEYS = [
