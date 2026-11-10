@@ -178,6 +178,24 @@ const TEXT_REPLACEMENTS = [
   ['rcLead:"远程控制功能需要登录后使用。使用 Kimi 账号登录即可继续。"', 'rcLead:"远程控制功能需要登录后使用。登录后即可继续。"'],
   // settings: remove the Lab tab
   [',{id:"lab",labelKey:"settings.tabs.lab",icon:"flask"}', ''],
+  // Provider directory: OpenAqua is API-provider based and must not carry
+  // Kimi subscription presets or their brand entries.
+  [
+    'kimiForCoding:{name:"Kimi For Coding",desc:"Moonshot Coding Plan subscription via API key"},',
+    '',
+  ],
+  [
+    'kimiForCodingGlobal:{name:"Kimi For Coding (kimi.ai)",desc:"Moonshot Coding Plan subscription via API key · kimi.ai"},',
+    '',
+  ],
+  [
+    'kimiForCoding:{name:"Kimi For Coding",desc:"月之暗面 · Coding Plan 订阅，API Key 接入"},',
+    '',
+  ],
+  [
+    'kimiForCodingGlobal:{name:"Kimi For Coding (kimi.ai)",desc:"月之暗面 · Coding Plan 订阅，API Key 接入 · kimi.ai"},',
+    '',
+  ],
   // About page: keep only "Version & updates" — drop Diagnostics and Agreements
   ['A("section",Vjt,[A("h3",Kjt,P(p(n)("settings.diagnostics")),1),A("div",Gjt,[A("div",Zjt,[A("span",Qjt,[qe(P(p(n)("settings.exportLog"))+" ",1),A("span",Yjt,P(p(n)("settings.exportLogHint")),1),p(Xu)()?te("",!0):(b(),E("span",Jjt,P(p(n)("settings.logHint")),1))]),Z(p(Sn),{variant:"secondary",size:"sm",onClick:q},{default:re(()=>[qe(P(p(n)("settings.exportLogBtn")),1)]),_:1})])])]),', ''],
   ['A("section",Xjt,[A("h3",eHt,P(p(n)("settings.agreements")),1),A("div",tHt,[A("div",nHt,[A("span",iHt,P(p(n)("settings.userAgreement")),1),Z(p(tn),{size:"sm",label:p(n)("settings.userAgreement"),tooltip:p(n)("settings.userAgreement"),onClick:Ee[13]||(Ee[13]=$e=>B(EHt))},{default:re(()=>[Z(p(Ce),{name:"external-link",size:"md"})]),_:1},8,["label","tooltip"])]),A("div",oHt,[A("span",sHt,P(p(n)("settings.privacyPolicy")),1),Z(p(tn),{size:"sm",label:p(n)("settings.privacyPolicy"),tooltip:p(n)("settings.privacyPolicy"),onClick:Ee[14]||(Ee[14]=$e=>B(LHt))},{default:re(()=>[Z(p(Ce),{name:"external-link",size:"md"})]),_:1},8,["label","tooltip"])])])])', ''],
@@ -575,6 +593,9 @@ function assertBrandContract() {
   const kimiProviderIconCount = javascript.split('<title>Kimi</title>').length - 1;
   if (kimiProviderIconCount !== 1 || javascript.includes('<title>OpenAqua</title>')) {
     throw new Error('Branding contract failed: Kimi provider icon was not preserved');
+  }
+  if (javascript.includes('Kimi For Coding') || javascript.includes('月之暗面')) {
+    throw new Error('Branding contract failed: Kimi subscription presets are still listed');
   }
   const providerSetupHandler = 'function a(){c()}function l(){Vy.value=!0}';
   if (javascript.split(providerSetupHandler).length - 1 !== 1) {
