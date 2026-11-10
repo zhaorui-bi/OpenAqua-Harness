@@ -27,7 +27,7 @@
         'Ask a research question',
         'Review evidence & constraints',
       ],
-      hint: 'Click a card to load it into the composer — review and edit before sending.',
+      hint: 'Click a card to load and run it — edit the prompt in the composer anytime.',
       cite: {
         label: 'How to cite',
         short: 'Liu H. et al. (2027). OpenAqua. Water Research 308, 126761.',
@@ -95,7 +95,7 @@
       ledeStrong: '从下面的真实场景出发',
       ledeSuffix: '，或描述你自己的课题。',
       steps: ['配置模型', '提出研究问题', '审阅证据与约束'],
-      hint: '点击卡片载入输入框 —— 发送前请审阅和修改。',
+      hint: '点击卡片即载入并运行 —— 随时可在输入框中修改问题。',
       cite: {
         label: '如何引用',
         short: 'Liu H. 等（2027）. OpenAqua. Water Research 308, 126761.',
@@ -211,7 +211,7 @@
       card.appendChild(heading);
       card.appendChild(el('p', 'oa-welcome-card-prompt', starter.prompt));
       card.addEventListener('click', function () {
-        loadIntoComposer(starter.prompt);
+        loadIntoComposer(starter.prompt, true);
       });
       cards.appendChild(card);
     });
@@ -290,7 +290,7 @@
     document.body.removeChild(area);
   }
 
-  function loadIntoComposer(prompt) {
+  function loadIntoComposer(prompt, submit) {
     var editor = findComposerEditor();
     if (!editor) return;
     editor.focus();
@@ -304,6 +304,20 @@
       editor.value = prompt;
       editor.dispatchEvent(new Event('input', { bubbles: true }));
     }
+    if (!submit) return;
+    // Let the editor state settle, then send with the same Enter binding the
+    // composer itself uses (plain Enter unless the composer is expanded).
+    setTimeout(function () {
+      var event = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        code: 'Enter',
+        keyCode: 13,
+        which: 13,
+        bubbles: true,
+        cancelable: true,
+      });
+      editor.dispatchEvent(event);
+    }, 0);
   }
 
   function removePanel() {
