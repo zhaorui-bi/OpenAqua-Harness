@@ -28,6 +28,36 @@
         'Review evidence & constraints',
       ],
       hint: 'Click a card to load it into the composer — review and edit before sending.',
+      cite: {
+        label: 'How to cite',
+        short: 'Liu H. et al. (2027). OpenAqua. Water Research 308, 126761.',
+        doiLabel: 'doi:10.1016/j.watres.2026.126761',
+        doiUrl: 'https://doi.org/10.1016/j.watres.2026.126761',
+        docsLabel: 'About the science',
+        docsUrl:
+          'https://github.com/zhaorui-bi/OpenAqua-Harness/blob/main/docs/OPENAQUA.md',
+        copy: 'Copy citation',
+        copied: 'Copied ✓',
+        plain:
+          'Liu H., Jiang Z., Zhong H., Li J., Pang W., Yuan Y. (2027). OpenAqua: An ' +
+          'automated multi-agent framework for early-stage water treatment train design ' +
+          'with retrieval augmentation and critic-based refinement. Water Research 308, ' +
+          '126761. https://doi.org/10.1016/j.watres.2026.126761',
+        bibtex:
+          '@article{liu2027openaqua,\n' +
+          '  title = {OpenAqua: An automated multi-agent framework for early-stage water ' +
+          'treatment train design with retrieval augmentation and critic-based ' +
+          'refinement},\n' +
+          '  author = {Liu, Hanzhang and Jiang, Zhaorui and Zhong, Huiling and Li, ' +
+          'Jinshuo and Pang, Wei and Yuan, Yingfang},\n' +
+          '  journal = {Water Research},\n' +
+          '  volume = {308},\n' +
+          '  pages = {126761},\n' +
+          '  year = {2027},\n' +
+          '  doi = {10.1016/j.watres.2026.126761},\n' +
+          '  url = {https://doi.org/10.1016/j.watres.2026.126761}\n' +
+          '}',
+      },
       starters: [
         {
           title: 'Arsenic in groundwater',
@@ -66,6 +96,36 @@
       ledeSuffix: '，或描述你自己的课题。',
       steps: ['配置模型', '提出研究问题', '审阅证据与约束'],
       hint: '点击卡片载入输入框 —— 发送前请审阅和修改。',
+      cite: {
+        label: '如何引用',
+        short: 'Liu H. 等（2027）. OpenAqua. Water Research 308, 126761.',
+        doiLabel: 'doi:10.1016/j.watres.2026.126761',
+        doiUrl: 'https://doi.org/10.1016/j.watres.2026.126761',
+        docsLabel: '了解 OpenAqua 原理',
+        docsUrl:
+          'https://github.com/zhaorui-bi/OpenAqua-Harness/blob/main/docs/OPENAQUA.md',
+        copy: '复制引用',
+        copied: '已复制 ✓',
+        plain:
+          'Liu H., Jiang Z., Zhong H., Li J., Pang W., Yuan Y. (2027). OpenAqua: An ' +
+          'automated multi-agent framework for early-stage water treatment train design ' +
+          'with retrieval augmentation and critic-based refinement. Water Research 308, ' +
+          '126761. https://doi.org/10.1016/j.watres.2026.126761',
+        bibtex:
+          '@article{liu2027openaqua,\n' +
+          '  title = {OpenAqua: An automated multi-agent framework for early-stage water ' +
+          'treatment train design with retrieval augmentation and critic-based ' +
+          'refinement},\n' +
+          '  author = {Liu, Hanzhang and Jiang, Zhaorui and Zhong, Huiling and Li, ' +
+          'Jinshuo and Pang, Wei and Yuan, Yingfang},\n' +
+          '  journal = {Water Research},\n' +
+          '  volume = {308},\n' +
+          '  pages = {126761},\n' +
+          '  year = {2027},\n' +
+          '  doi = {10.1016/j.watres.2026.126761},\n' +
+          '  url = {https://doi.org/10.1016/j.watres.2026.126761}\n' +
+          '}',
+      },
       starters: [
         {
           title: '地下水砷污染',
@@ -158,7 +218,76 @@
     panel.appendChild(cards);
 
     panel.appendChild(el('p', 'oa-welcome-hint', copy.hint));
+
+    var cite = el('div', 'oa-welcome-cite');
+    var citeHead = el('div', 'oa-welcome-cite-head');
+    citeHead.appendChild(el('span', 'oa-welcome-cite-label', copy.cite.label));
+    var doiLink = el('a', 'oa-welcome-cite-link', copy.cite.doiLabel);
+    doiLink.href = copy.cite.doiUrl;
+    doiLink.target = '_blank';
+    doiLink.rel = 'noreferrer';
+    citeHead.appendChild(doiLink);
+    var docsLink = el('a', 'oa-welcome-cite-link', copy.cite.docsLabel);
+    docsLink.href = copy.cite.docsUrl;
+    docsLink.target = '_blank';
+    docsLink.rel = 'noreferrer';
+    citeHead.appendChild(docsLink);
+    cite.appendChild(citeHead);
+    cite.appendChild(el('p', 'oa-welcome-cite-text', copy.cite.short));
+    var copyRow = el('div', 'oa-welcome-cite-actions');
+    var plainButton = el('button', 'oa-welcome-cite-btn', copy.cite.copy);
+    plainButton.type = 'button';
+    plainButton.addEventListener('click', function () {
+      copyCitation(plainButton, copy.cite.plain, copy.cite.copied);
+    });
+    var bibtexButton = el('button', 'oa-welcome-cite-btn', 'BibTeX');
+    bibtexButton.type = 'button';
+    bibtexButton.addEventListener('click', function () {
+      copyCitation(bibtexButton, copy.cite.bibtex, copy.cite.copied);
+    });
+    copyRow.appendChild(plainButton);
+    copyRow.appendChild(bibtexButton);
+    cite.appendChild(copyRow);
+    panel.appendChild(cite);
     return panel;
+  }
+
+  function copyCitation(button, text, copiedLabel) {
+    var done = function () {
+      var original = button.textContent;
+      button.textContent = copiedLabel;
+      button.classList.add('is-copied');
+      setTimeout(function () {
+        button.textContent = original;
+        button.classList.remove('is-copied');
+      }, 1600);
+    };
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(text).then(done, function () {
+        fallbackCopy(text);
+        done();
+      });
+    } else {
+      fallbackCopy(text);
+      done();
+    }
+  }
+
+  function fallbackCopy(text) {
+    var area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.top = '-9999px';
+    document.body.appendChild(area);
+    area.select();
+    try {
+      document.execCommand('copy');
+    } catch (_err) {
+      // Best effort: clipboard access can be denied; the citation text stays
+      // visible for manual selection.
+    }
+    document.body.removeChild(area);
   }
 
   function loadIntoComposer(prompt) {

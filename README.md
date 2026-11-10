@@ -401,8 +401,13 @@ cite the OpenAqua paper and the exact software/data versions used:
 
 > Liu H., Jiang Z., Zhong H., Li J., Pang W., Yuan Y. OpenAqua: an automated
 > multi-agent framework for early-stage water treatment train design with
-> retrieval augmentation and critic-based refinement. *Water Research* (2026).
-> <https://doi.org/10.1016/j.watres.2026.126761>
+> retrieval augmentation and critic-based refinement. *Water Research* 308
+> (2027) 126761. <https://doi.org/10.1016/j.watres.2026.126761>
+
+The OpenAqua dataset (including WContBench) is at
+[huggingface.co/datasets/zhaorui-bi/OpenAqua](https://huggingface.co/datasets/zhaorui-bi/OpenAqua).
+A plain-language summary of the framework, its knowledge base, and the
+evaluation evidence is in [docs/OPENAQUA.md](./docs/OPENAQUA.md).
 
 The root [LICENSE](./LICENSE) is the OpenAqua Harness MIT license. Upstream
 copyright notices and dependency records are kept in [licenses/](./licenses/).

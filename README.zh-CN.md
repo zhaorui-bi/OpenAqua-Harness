@@ -300,8 +300,13 @@ OpenAqua 论文以及实际使用的软件、数据和模型版本：
 
 > Liu H., Jiang Z., Zhong H., Li J., Pang W., Yuan Y. OpenAqua: an automated
 > multi-agent framework for early-stage water treatment train design with
-> retrieval augmentation and critic-based refinement. *Water Research* (2026).
-> <https://doi.org/10.1016/j.watres.2026.126761>
+> retrieval augmentation and critic-based refinement. *Water Research* 308
+> (2027) 126761. <https://doi.org/10.1016/j.watres.2026.126761>
+
+OpenAqua 数据集（含 WContBench）见
+[huggingface.co/datasets/zhaorui-bi/OpenAqua](https://huggingface.co/datasets/zhaorui-bi/OpenAqua)。
+框架、知识库与评估证据的通俗说明见
+[docs/OPENAQUA.md](./docs/OPENAQUA.md)。
 
 根目录的 [LICENSE](./LICENSE) 是 OpenAqua Harness 的 MIT 主许可证。
 上游版权声明和依赖清单集中保存在 [licenses/](./licenses/)。
