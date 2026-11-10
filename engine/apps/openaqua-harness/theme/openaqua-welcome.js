@@ -165,6 +165,17 @@
     return document.querySelector('.chat .chat-empty') || document.querySelector('.chat-empty');
   }
 
+  // The upstream empty state renders the logo inside `.chat-empty` while the
+  // empty composer (`.empty-composer`) lives in a SIBLING subtree, so the
+  // composer must be located from the document, never inside `.chat-empty`.
+  function findEmptyComposer() {
+    var candidates = document.querySelectorAll('.empty-composer');
+    for (var i = 0; i < candidates.length; i += 1) {
+      if (candidates[i].getClientRects().length > 0) return candidates[i];
+    }
+    return candidates.length > 0 ? candidates[0] : null;
+  }
+
   function findComposerEditor() {
     var composer = document.querySelector('.chat-empty .empty-composer') ||
       document.querySelector('.empty-composer') ||
@@ -326,16 +337,24 @@
   }
 
   function sync() {
-    var emptyState = findEmptyState();
-    if (!emptyState) {
+    var composer = findEmptyComposer();
+    var emptyState = composer ? null : findEmptyState();
+    if (!composer && !emptyState) {
       removePanel();
       return;
     }
     if (document.getElementById(PANEL_ID)) return;
-    var composer = emptyState.querySelector('.empty-composer') ||
-      emptyState.querySelector('.composer');
-    if (!composer || !composer.parentNode) return;
-    composer.parentNode.insertBefore(buildPanel(copyForDocument()), composer);
+    if (composer && composer.parentNode) {
+      composer.parentNode.insertBefore(buildPanel(copyForDocument()), composer);
+      return;
+    }
+    // Fallback for variant structures: anchor right after the logo block.
+    if (emptyState && emptyState.parentNode) {
+      emptyState.parentNode.insertBefore(
+        buildPanel(copyForDocument()),
+        emptyState.nextSibling,
+      );
+    }
   }
 
   if (document.readyState === 'loading') {
