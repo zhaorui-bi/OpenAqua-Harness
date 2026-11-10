@@ -17,3 +17,33 @@ keywords:
   - retrieval augmented generation
   - MCP
   - Electron
+preferred-citation:
+  type: article
+  title: "OpenAqua: An automated multi-agent framework for early-stage water treatment train design with retrieval augmentation and critic-based refinement"
+  authors:
+    - family-names: Liu
+      given-names: Hanzhang
+    - family-names: Jiang
+      given-names: Zhaorui
+    - family-names: Zhong
+      given-names: Huiling
+    - family-names: Li
+      given-names: Jinshuo
+    - family-names: Pang
+      given-names: Wei
+    - family-names: Yuan
+      given-names: Yingfang
+  journal: "Water Research"
+  volume: 308
+  pages: "126761"
+  year: 2027
+  doi: "10.1016/j.watres.2026.126761"
+  url: "https://doi.org/10.1016/j.watres.2026.126761"
+references:
+  - type: data
+    title: "OpenAqua dataset and WContBench"
+    authors:
+      - name: "OpenAqua authors"
+    year: 2027
+    url: "https://huggingface.co/datasets/zhaorui-bi/OpenAqua"
+    repository: "https://huggingface.co/datasets/zhaorui-bi/OpenAqua"

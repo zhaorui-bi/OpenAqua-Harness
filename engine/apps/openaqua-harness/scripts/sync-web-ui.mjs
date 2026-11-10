@@ -26,6 +26,7 @@ const DST = path.join(pkgRoot, 'web-ui');
 const FAVICON = path.join(productRoot, 'build', 'icon.ico');
 const MARK = path.join(productRoot, 'build', 'logo-256.png');
 const THEME = path.join(pkgRoot, 'theme', 'openaqua.css');
+const WELCOME = path.join(pkgRoot, 'theme', 'openaqua-welcome.js');
 const PRODUCT_VERSION = JSON.parse(
   readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'),
 ).version;
@@ -54,6 +55,33 @@ const TEXT_REPLACEMENTS = [
   ],
   ['Kimi Code Web', 'OpenAqua Harness'],
   ['Kimi Code', 'OpenAqua Harness'],
+  // Research-flavored composer placeholders replace the upstream neutral ones.
+  [
+    'Type a message to start a new conversation…',
+    'Describe your water scenario — influent quality, target, constraints…',
+  ],
+  ['Type a message…', 'Describe your water scenario — influent, target, constraints…'],
+  [
+    '输入消息开始新对话…',
+    '描述你的水处理场景 — 进水水质、目标、约束条件…',
+  ],
+  ['输入消息…', '描述你的水处理场景 — 进水、目标、约束…'],
+  // About page: turn the app-version hint row into an in-product citation of
+  // the OpenAqua paper (persistent surface; the welcome panel also cites it).
+  [
+    'The running app’s version',
+    'Built on OpenAqua (Liu et al., Water Research 308 (2027) 126761, doi:10.1016/j.watres.2026.126761). Cite the paper plus the exact software, dataset, and model versions used.',
+  ],
+  [
+    '当前应用的版本号',
+    '基于 OpenAqua 构建（Liu 等，Water Research 308 (2027) 126761，doi:10.1016/j.watres.2026.126761）。引用时请同时注明实际使用的软件、数据集与模型版本。',
+  ],
+  // First-run welcome addon: loaded right after boot.js so it is present
+  // before the bundle mounts the empty chat state.
+  [
+    '<script src="/boot.js"></script>',
+    '<script src="/boot.js"></script>\n    <script src="/openaqua-welcome.js" defer></script>',
+  ],
   [
     '<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />',
     '<meta name="theme-color" content="#f3fbfa" media="(prefers-color-scheme: light)" />',
@@ -186,8 +214,19 @@ for (const [label, filePath] of [
   ['canonical mark', MARK],
   ['favicon', FAVICON],
   ['theme source', THEME],
+  ['welcome addon', WELCOME],
 ]) {
   if (!existsSync(filePath)) throw new Error(`OpenAqua ${label} not found at ${filePath}`);
+}
+
+// The welcome addon ships as plain browser JavaScript; fail the sync early if
+// it no longer parses, instead of publishing a broken workbench script.
+{
+  const { spawnSync } = await import('node:child_process');
+  const syntax = spawnSync(process.execPath, ['--check', WELCOME], { encoding: 'utf8' });
+  if (syntax.status !== 0) {
+    throw new Error(`OpenAqua welcome addon failed syntax check:\n${syntax.stderr}`);
+  }
 }
 const markDataUri = `data:image/png;base64,${readFileSync(MARK).toString('base64')}`;
 
@@ -284,6 +323,8 @@ if (!existsSync(path.join(SRC, 'index.html'))) {
 
 rmSync(DST, { recursive: true, force: true });
 cpSync(SRC, DST, { recursive: true });
+copyFileSync(WELCOME, path.join(DST, 'openaqua-welcome.js'));
+console.log('web-ui: welcome addon copied to openaqua-welcome.js');
 
 function installThemeAssets() {
   if (!existsSync(THEME)) {
@@ -437,7 +478,7 @@ console.log(`web-ui: bundled ${FONT_PACKAGES.length} self-hosted theme font fami
   }
   const stamp = hash.digest('hex').slice(0, 8);
   const before = html;
-  html = html.replace(/(src|href)="(\/(?:boot\.js|assets\/[^"]+))"/g, (_m, attr, url) => {
+  html = html.replace(/(src|href)="(\/(?:boot\.js|openaqua-welcome\.js|assets\/[^"]+))"/g, (_m, attr, url) => {
     const sep = url.includes('?') ? '&' : '?';
     return `${attr}="${url}${sep}v=${stamp}"`;
   });
@@ -457,6 +498,13 @@ function assertBrandContract() {
   const indexHtml = readFileSync(path.join(DST, 'index.html'), 'utf8');
   if (!indexHtml.includes('<title>OpenAqua Harness</title>')) {
     throw new Error('Branding contract failed: product title was not applied');
+  }
+  if (!indexHtml.includes('<script src="/openaqua-welcome.js')) {
+    throw new Error('Branding contract failed: welcome addon script tag is missing');
+  }
+  const welcomeAddonPath = path.join(DST, 'openaqua-welcome.js');
+  if (!existsSync(welcomeAddonPath) || sha256(welcomeAddonPath) !== sha256(WELCOME)) {
+    throw new Error('Branding contract failed: copied welcome addon differs from the theme source');
   }
   for (const expectedThemeColor of ['#f3fbfa', '#0d2632']) {
     if (!indexHtml.includes(`content="${expectedThemeColor}"`)) {
@@ -511,6 +559,18 @@ function assertBrandContract() {
     !javascript.includes('const Cw={light:"#f3fbfa",dark:"#0d2632"}')
   ) {
     throw new Error('Branding contract failed: bright default color scheme was not applied');
+  }
+  if (
+    !javascript.includes('Describe your water scenario') ||
+    !javascript.includes('描述你的水处理场景')
+  ) {
+    throw new Error('Branding contract failed: research-flavored composer placeholder is missing');
+  }
+  if (
+    !javascript.includes('Built on OpenAqua') ||
+    !javascript.includes('基于 OpenAqua 构建')
+  ) {
+    throw new Error('Branding contract failed: About-page OpenAqua citation is missing');
   }
   const kimiProviderIconCount = javascript.split('<title>Kimi</title>').length - 1;
   if (kimiProviderIconCount !== 1 || javascript.includes('<title>OpenAqua</title>')) {

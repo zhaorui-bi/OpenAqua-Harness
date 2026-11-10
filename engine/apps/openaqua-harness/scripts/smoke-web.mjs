@@ -57,6 +57,24 @@ try {
   if (!assetHtml.includes('<title>OpenAqua Harness</title>')) {
     throw new Error('Web UI entry point is not the branded OpenAqua document');
   }
+  if (!assetHtml.includes('<script src="/openaqua-welcome.js')) {
+    throw new Error('Web UI entry point does not load the OpenAqua welcome addon');
+  }
+
+  const welcomeResponse = await fetch(`${url.origin}/openaqua-welcome.js`, {
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!welcomeResponse.ok) {
+    throw new Error(`welcome addon returned HTTP ${String(welcomeResponse.status)}`);
+  }
+  const welcomeScript = await welcomeResponse.text();
+  if (
+    !welcomeScript.includes('oa-welcome') ||
+    !welcomeScript.includes('Arsenic in groundwater') ||
+    !welcomeScript.includes('地下水砷污染')
+  ) {
+    throw new Error('served welcome addon is not the OpenAqua bilingual starter panel');
+  }
 
   const unauthorized = await fetch(`${url.origin}/api/v1/search`, {
     method: 'POST',
