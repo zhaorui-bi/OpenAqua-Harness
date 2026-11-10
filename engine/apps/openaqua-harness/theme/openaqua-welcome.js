@@ -345,7 +345,11 @@
     }
     if (document.getElementById(PANEL_ID)) return;
     if (composer && composer.parentNode) {
-      composer.parentNode.insertBefore(buildPanel(copyForDocument()), composer);
+      // Insert as the container's first child so the order reads
+      // logo → examples → workspace selector → composer. Anchoring right
+      // before the composer instead leaves the selector stranded above the
+      // examples, which reads upside-down.
+      composer.parentNode.insertBefore(buildPanel(copyForDocument()), composer.parentNode.firstChild);
       return;
     }
     // Fallback for variant structures: anchor right after the logo block.
