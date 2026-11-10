@@ -87,6 +87,16 @@ export function renderBrandedWelcome(options: BrandedWelcomeOptions): string[] {
       : currentTheme.fg('textDim', ' model setup  ::  ') +
         currentTheme.boldFg('primary', '/help') +
         currentTheme.fg('textDim', ' commands'));
+  const examplePrompt = truncateToWidth(
+    '"Assess arsenic-contaminated groundwater: 150 → ≤10 µg/L — compare trains"',
+    Math.max(8, innerWidth - 5),
+    '…',
+  );
+  const tryLine =
+    field('TRY', currentTheme.fg('textDim', examplePrompt)) +
+    (innerWidth >= 64
+      ? currentTheme.fg('textDim', '  —  press  ') + currentTheme.boldFg('primary', 'i')
+      : '');
   const content: string[] = [];
 
   if (innerWidth >= artWidth + 39) {
@@ -157,7 +167,7 @@ export function renderBrandedWelcome(options: BrandedWelcomeOptions): string[] {
   if (state.mcpServersSummary) {
     content.push(field('TOOLS', currentTheme.fg('success', state.mcpServersSummary)));
   }
-  content.push(quickStart);
+  content.push(tryLine, quickStart);
 
   return framed(content, width, brand.productName);
 }
